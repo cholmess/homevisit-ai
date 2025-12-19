@@ -127,41 +127,48 @@ class TenantLawQdrant:
             # Prepare text for embedding
             text = self.prepare_text_for_embedding(chunk)
             
-            # Create point with metadata
-            point = PointStruct(
-                id=chunk.get('id', f"chunk_{i}"),
-                vector=None,  # Will be added after embedding
-                payload={
+            # Store chunk data for later point creation
+            chunk_data = {
+                'id': i,  # Use integer index as ID
+                'original_id': chunk.get('id', f"chunk_{i}"),  # Store original ID in payload
+                'payload': {
                     'title': chunk.get('title', ''),
                     'category': chunk.get('category', ''),
                     'key_rule': chunk.get('key_rule', ''),
                     'expat_implication': chunk.get('expat_implication', ''),
                     'risk_level': chunk.get('risk_level', ''),
                     'source_document': chunk.get('source_document', ''),
-                    'text_for_search': text  # Store for reference
+                    'text_for_search': text,  # Store for reference
+                    'original_id': chunk.get('id', f"chunk_{i}")  # Also in payload for easier access
                 }
-            )
-            points.append(point)
+            }
+            points.append(chunk_data)
         
         # Generate embeddings in batches
-        all_texts = [p.payload['text_for_search'] for p in points]
+        all_texts = [p['payload']['text_for_search'] for p in points]
         all_embeddings = self.generate_embeddings(all_texts)
         
-        # Add embeddings to points
-        for point, embedding in zip(points, all_embeddings):
-            point.vector = embedding
+        # Create PointStruct objects with embeddings
+        point_structs = []
+        for point_data, embedding in zip(points, all_embeddings):
+            point = PointStruct(
+                id=point_data['id'],
+                vector=embedding,
+                payload=point_data['payload']
+            )
+            point_structs.append(point)
         
         # Upload in batches
-        print(f"Uploading {len(points)} points to Qdrant...")
-        for i in range(0, len(points), batch_size):
-            batch = points[i:i+batch_size]
+        print(f"Uploading {len(point_structs)} points to Qdrant...")
+        for i in range(0, len(point_structs), batch_size):
+            batch = point_structs[i:i+batch_size]
             self.client.upsert(
                 collection_name=self.collection_name,
                 points=batch
             )
-            print(f"  Uploaded batch {i//batch_size + 1}/{(len(points)-1)//batch_size + 1}")
+            print(f"  Uploaded batch {i//batch_size + 1}/{(len(point_structs)-1)//batch_size + 1}")
         
-        print(f"Successfully uploaded {len(points)} points to {self.collection_name}")
+        print(f"Successfully uploaded {len(point_structs)} points to {self.collection_name}")
         
         # Print collection info
         collection_info = self.client.get_collection(self.collection_name)
@@ -205,13 +212,13 @@ class TenantLawQdrant:
             query_filter = Filter(must=conditions)
         
         # Search
-        results = self.client.search(
+        results = self.client.query_points(
             collection_name=self.collection_name,
-            query_vector=query_embedding,
+            query=query_embedding,
             query_filter=query_filter,
             limit=limit,
             with_payload=True
-        )
+        ).points
         
         # Format results
         formatted_results = []

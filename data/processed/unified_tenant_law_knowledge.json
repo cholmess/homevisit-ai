@@ -1,0 +1,575 @@
+{
+  "metadata": {
+    "source": "unified_tenant_law_knowledge_base",
+    "created_for": "expat_tenant_assistant",
+    "version": "1.0",
+    "created_date": "2025-12-19",
+    "categories": [
+      "Contract Basics",
+      "Deposits & Payments",
+      "Rent & Costs",
+      "Repairs & Maintenance",
+      "Rights & Obligations",
+      "Notice Periods",
+      "Utility Costs",
+      "Special Situations"
+    ],
+    "category_descriptions": {
+      "Contract Basics": "Contract formation, language, terms, and structure",
+      "Deposits & Payments": "Security deposits, payment methods, and financial obligations",
+      "Rent & Costs": "Rent amounts, increases, utilities, and cost allocations",
+      "Repairs & Maintenance": "Repair responsibilities, maintenance obligations, and property upkeep",
+      "Rights & Obligations": "Tenant and landlord rights, access rules, and legal obligations",
+      "Notice Periods": "Termination notices, notice periods, and ending tenancy",
+      "Utility Costs": "Heating, water, electricity, and utility bill settlements",
+      "Special Situations": "Property sale, inheritance, force majeure, and exceptional cases"
+    },
+    "total_chunks": 56,
+    "source_files": [
+      "tenant_law_summaries.json (30 items)",
+      "comprehensive_tenant_law.json (27 items)"
+    ],
+    "category_counts": {
+      "Deposits & Payments": 8,
+      "Notice Periods": 8,
+      "Rights & Obligations": 14,
+      "Contract Basics": 13,
+      "Rent & Costs": 4,
+      "Repairs & Maintenance": 4,
+      "Utility Costs": 2,
+      "Special Situations": 3
+    }
+  },
+  "chunks": [
+    {
+      "id": "deposit_01",
+      "category": "Deposits & Payments",
+      "title": "Security Deposit Maximum",
+      "key_rule": "Landlords can only request up to 3 months' rent as security deposit",
+      "expat_implication": "As an expat, you're protected from excessive deposit demands. Landlords cannot ask for 6+ months just because you're foreign.",
+      "risk_level": "normal",
+      "original_category": "Deposits"
+    },
+    {
+      "id": "deposit_02",
+      "category": "Deposits & Payments",
+      "title": "Deposit Return Timeline",
+      "key_rule": "Landlord must return deposit within 30 days of lease end",
+      "expat_implication": "Critical when leaving the country. Plan your departure date allowing 30 days for deposit return before you fly out.",
+      "risk_level": "caution",
+      "original_category": "Deposits"
+    },
+    {
+      "id": "deposit_03",
+      "category": "Deposits & Payments",
+      "title": "Deposit Deduction Rules",
+      "key_rule": "Deductions only for actual damages beyond normal wear and tear",
+      "expat_implication": "Document apartment condition thoroughly at move-in with photos. Normal wear cannot be charged, even after years of living there.",
+      "risk_level": "caution",
+      "original_category": "Deposits"
+    },
+    {
+      "id": "notice_01",
+      "category": "Notice Periods",
+      "title": "Tenant Notice Period",
+      "key_rule": "Standard 3-month notice period for terminating lease",
+      "expat_implication": "If your contract ends abruptly due to job loss, you're still bound by 3 months. Some employers offer notice period buyout - check your package.",
+      "risk_level": "caution",
+      "original_category": "Notice periods"
+    },
+    {
+      "id": "notice_02",
+      "category": "Notice Periods",
+      "title": "Landlord Notice for Non-Payment",
+      "key_rule": "Landlord must give 30 days notice before eviction for non-payment",
+      "expat_implication": "You have a 30-day buffer if you miss rent payment. Use this time to communicate with landlord and arrange payment.",
+      "risk_level": "red flag",
+      "original_category": "Notice periods"
+    },
+    {
+      "id": "notice_03",
+      "category": "Notice Periods",
+      "title": "Fixed Contract End Notice",
+      "key_rule": "No notice required if contract has specific end date",
+      "expat_implication": "Fixed-term contracts protect you from having to remember notice dates. Just ensure you know the exact end date.",
+      "risk_level": "normal",
+      "original_category": "Notice periods"
+    },
+    {
+      "id": "rights_01",
+      "category": "Rights & Obligations",
+      "title": "Right to Quiet Enjoyment",
+      "key_rule": "Landlord cannot enter without notice except emergencies",
+      "expat_implication": "Your privacy is protected even as a foreigner. Landlord must give 24-48 hours notice for non-emergency visits.",
+      "risk_level": "normal",
+      "original_category": "Rights & obligations"
+    },
+    {
+      "id": "rights_02",
+      "category": "Rights & Obligations",
+      "title": "Maintenance Responsibility",
+      "key_rule": "Landlord responsible for major repairs and appliance replacement",
+      "expat_implication": "Don't let landlords push repair costs on you. Heating, plumbing, structural issues are their responsibility.",
+      "risk_level": "caution",
+      "original_category": "Rights & obligations"
+    },
+    {
+      "id": "rights_03",
+      "category": "Rights & Obligations",
+      "title": "Subletting Rights",
+      "key_rule": "Subletting requires landlord's written permission",
+      "expat_implication": "If you need to leave early, get sublet permission in writing. Verbal agreements won't protect you.",
+      "risk_level": "red flag",
+      "original_category": "Rights & obligations"
+    },
+    {
+      "id": "rights_04",
+      "category": "Rights & Obligations",
+      "title": "Pet Policy",
+      "key_rule": "Landlord can reasonably refuse pets in the lease",
+      "expat_implication": "Get pet permission in writing before signing. Don't assume you can negotiate later.",
+      "risk_level": "caution",
+      "original_category": "Rights & obligations"
+    },
+    {
+      "id": "rights_05",
+      "category": "Rights & Obligations",
+      "title": "Rent Increase Rules",
+      "key_rule": "Rent increases only allowed at contract renewal or with specific clauses",
+      "expat_implication": "Landlord cannot raise rent mid-contract unless specified. Fixed-term contracts offer rent stability.",
+      "risk_level": "normal",
+      "original_category": "Rights & obligations"
+    },
+    {
+      "id": "contract_01",
+      "category": "Contract Basics",
+      "title": "Written Contract Requirement",
+      "key_rule": "All leases over 1 year must be in writing",
+      "expat_implication": "Always get a written contract in a language you understand. Don't accept verbal agreements.",
+      "risk_level": "red flag",
+      "original_category": "Contract basics"
+    },
+    {
+      "id": "contract_02",
+      "category": "Contract Basics",
+      "title": "Contract Language Rights",
+      "key_rule": "Contract must be in language tenant understands or have certified translation",
+      "expat_implication": "You have right to understand what you're signing. Request translation if contract isn't in your language.",
+      "risk_level": "caution",
+      "original_category": "Contract basics"
+    },
+    {
+      "id": "contract_03",
+      "category": "Contract Basics",
+      "title": "Fixed vs Indefinite Term",
+      "key_rule": "Contracts can be fixed-term or indefinite with different notice requirements",
+      "expat_implication": "Fixed-term offers stability but less flexibility. Indefinite offers flexibility but requires proper notice.",
+      "risk_level": "normal",
+      "original_category": "Contract basics"
+    },
+    {
+      "id": "contract_04",
+      "category": "Contract Basics",
+      "title": "Break Clause Requirements",
+      "key_rule": "Early termination clauses must be clearly stated and reasonable",
+      "expat_implication": "If you need flexibility for potential relocation, negotiate break clauses before signing.",
+      "risk_level": "caution",
+      "original_category": "Contract basics"
+    },
+    {
+      "id": "contract_05",
+      "category": "Contract Basics",
+      "title": "Utility Responsibility",
+      "key_rule": "Utility payment responsibility must be clearly specified",
+      "expat_implication": "Clarify which utilities you pay vs landlord. Unexpected utility bills can be expensive surprises.",
+      "risk_level": "caution",
+      "original_category": "Contract basics"
+    },
+    {
+      "id": "deposit_04",
+      "category": "Deposits & Payments",
+      "title": "Deposit Interest",
+      "key_rule": "Landlord may be required to pay interest on security deposits",
+      "expat_implication": "For long-term stays (2+ years), check if deposit earns interest. This affects your total housing cost.",
+      "risk_level": "normal",
+      "original_category": "Deposits"
+    },
+    {
+      "id": "deposit_05",
+      "category": "Deposits & Payments",
+      "title": "Deposit Protection Scheme",
+      "key_rule": "Some jurisdictions require deposits to be held in protection schemes",
+      "expat_implication": "Verify if your deposit must be held in government protection scheme. This prevents landlord from keeping it unfairly.",
+      "risk_level": "caution",
+      "original_category": "Deposits"
+    },
+    {
+      "id": "notice_04",
+      "category": "Notice Periods",
+      "title": "Emergency Termination",
+      "key_rule": "Can terminate immediately with proper documentation for emergencies",
+      "expat_implication": "Job loss, health emergency, or family crisis may allow immediate termination. Keep documentation.",
+      "risk_level": "caution",
+      "original_category": "Notice periods"
+    },
+    {
+      "id": "notice_05",
+      "category": "Notice Periods",
+      "title": "Renewal Notice Deadlines",
+      "key_rule": "Must give notice of non-renewal by specified deadline",
+      "expat_implication": "Missing renewal deadlines can auto-renew your lease. Mark calendar for renewal decision dates.",
+      "risk_level": "red flag",
+      "original_category": "Notice periods"
+    },
+    {
+      "id": "rights_06",
+      "category": "Rights & Obligations",
+      "title": "Access for Repairs",
+      "key_rule": "Must allow reasonable access for repairs with proper notice",
+      "expat_implication": "You can't refuse all repair access, but can request reasonable scheduling. 24-hour notice is standard.",
+      "risk_level": "normal",
+      "original_category": "Rights & obligations"
+    },
+    {
+      "id": "rights_07",
+      "category": "Rights & Obligations",
+      "title": "Modifications and Improvements",
+      "key_rule": "Cannot make structural changes without landlord permission",
+      "expat_implication": "Even minor improvements need approval. Get written permission before painting or installing fixtures.",
+      "risk_level": "caution",
+      "original_category": "Rights & obligations"
+    },
+    {
+      "id": "rights_08",
+      "category": "Rights & Obligations",
+      "title": "Insurance Requirements",
+      "key_rule": "Tenant may be required to maintain renter's insurance",
+      "expat_implication": "Check if insurance is mandatory. Even if not required, it's wise for protecting your belongings.",
+      "risk_level": "normal",
+      "original_category": "Rights & obligations"
+    },
+    {
+      "id": "rights_09",
+      "category": "Rights & Obligations",
+      "title": "Guest and Visitor Rules",
+      "key_rule": "Reasonable guest policies allowed but cannot completely restrict visitors",
+      "expat_implication": "Landlords can set reasonable limits but cannot ban family visits. Understand guest policies before hosting.",
+      "risk_level": "normal",
+      "original_category": "Rights & obligations"
+    },
+    {
+      "id": "rights_10",
+      "category": "Rights & Obligations",
+      "title": "Dispute Resolution Process",
+      "key_rule": "Specific procedures for handling landlord-tenant disputes",
+      "expat_implication": "Know the official dispute resolution process. Don't rely on informal negotiations for serious issues.",
+      "risk_level": "caution",
+      "original_category": "Rights & obligations"
+    },
+    {
+      "id": "contract_06",
+      "category": "Contract Basics",
+      "title": "Identification Requirements",
+      "key_rule": "Must provide valid identification and residency documentation",
+      "expat_implication": "Have passport, visa, and work permit ready. Some landlords may require additional references.",
+      "risk_level": "normal",
+      "original_category": "Contract basics"
+    },
+    {
+      "id": "contract_07",
+      "category": "Contract Basics",
+      "title": "Guarantor Requirements",
+      "key_rule": "Landlord may require local guarantor for foreign tenants",
+      "expat_implication": "Many expats face guarantor requirements. Some companies provide this as part of relocation package.",
+      "risk_level": "caution",
+      "original_category": "Contract basics"
+    },
+    {
+      "id": "contract_08",
+      "category": "Contract Basics",
+      "title": "Payment Method Specifications",
+      "key_rule": "Contract must specify acceptable rent payment methods",
+      "expat_implication": "Verify you can pay via your preferred method. International transfers may have fees.",
+      "risk_level": "normal",
+      "original_category": "Contract basics"
+    },
+    {
+      "id": "contract_09",
+      "category": "Contract Basics",
+      "title": "Late Payment Penalties",
+      "key_rule": "Late fees must be reasonable and clearly stated",
+      "expat_implication": "Understand exact late fees and grace periods. International delays can affect payment timing.",
+      "risk_level": "caution",
+      "original_category": "Contract basics"
+    },
+    {
+      "id": "contract_10",
+      "category": "Contract Basics",
+      "title": "Force Majeure Clauses",
+      "key_rule": "Contract may include clauses for unforeseen circumstances",
+      "expat_implication": "Check if pandemic, natural disasters, or political events affect your obligations. Important for international tenants.",
+      "risk_level": "normal",
+      "original_category": "Contract basics"
+    },
+    {
+      "id": "contract_01",
+      "category": "Contract Basics",
+      "title": "Written Contract Requirements",
+      "key_rule": "All rental agreements must be in writing to be enforceable",
+      "expat_implication": "Verbal agreements are not legally binding. Always insist on a written contract in a language you understand before paying any money.",
+      "risk_level": "red flag",
+      "source_document": "various",
+      "original_category": null
+    },
+    {
+      "id": "contract_02",
+      "category": "Contract Basics",
+      "title": "Contract Language and Translation",
+      "key_rule": "Contracts must be understandable to both parties",
+      "expat_implication": "You have the right to a translation if you don't understand German. Don't sign anything you can't fully comprehend.",
+      "risk_level": "caution",
+      "source_document": "various",
+      "original_category": null
+    },
+    {
+      "id": "contract_03",
+      "category": "Contract Basics",
+      "title": "Fixed vs Indefinite Term Contracts",
+      "key_rule": "Fixed-term contracts require specific justification",
+      "expat_implication": "Landlords need valid reasons for fixed terms (e.g., personal use). Indefinite contracts offer more flexibility but require proper notice.",
+      "risk_level": "normal",
+      "source_document": "various",
+      "original_category": null
+    },
+    {
+      "id": "deposit_01",
+      "category": "Deposits & Payments",
+      "title": "Security Deposit Limits",
+      "key_rule": "Maximum 3 months' net rent as security deposit",
+      "expat_implication": "Landlords cannot demand more than 3 months' rent, even for expats. This applies whether you're German or foreign.",
+      "risk_level": "caution",
+      "source_document": "various",
+      "original_category": null
+    },
+    {
+      "id": "deposit_02",
+      "category": "Deposits & Payments",
+      "title": "Deposit Return Process",
+      "key_rule": "Landlord must return deposit within reasonable time after inspection",
+      "expat_implication": "Document condition thoroughly at move-in with photos/videos. This protects you from unfair deductions when leaving.",
+      "risk_level": "caution",
+      "source_document": "moving-in-out.pdf",
+      "original_category": null
+    },
+    {
+      "id": "deposit_03",
+      "category": "Deposits & Payments",
+      "title": "Deposit Interest Requirements",
+      "key_rule": "Landlord may need to pay interest on long-term deposits",
+      "expat_implication": "For stays over 3 years, check if your deposit earns interest. This varies by state but can affect your total housing cost.",
+      "risk_level": "normal",
+      "source_document": "various",
+      "original_category": null
+    },
+    {
+      "id": "rent_01",
+      "category": "Rent & Costs",
+      "title": "Cold Rent vs Warm Rent",
+      "key_rule": "Rent consists of base rent (Kaltmiete) plus utilities (Nebenkosten)",
+      "expat_implication": "Understand what's included in your utilities. Heating, water, and building maintenance are typically included; electricity and internet usually aren't.",
+      "risk_level": "normal",
+      "source_document": "utility-costs.pdf",
+      "original_category": null
+    },
+    {
+      "id": "rent_02",
+      "category": "Rent & Costs",
+      "title": "Rent Increase Limits",
+      "key_rule": "Rent increases are capped at 20% over 3 years (Mietpreisbremse)",
+      "expat_implication": "In many cities, rent cannot exceed local rates by more than 10%. Check if your area has rent control - this protects you from price gouging.",
+      "risk_level": "caution",
+      "source_document": "rent-increase.pdf",
+      "original_category": null
+    },
+    {
+      "id": "rent_03",
+      "category": "Rent & Costs",
+      "title": "Modernization Increases",
+      "key_rule": "Landlords can increase rent by 8-11% for major renovations",
+      "expat_implication": "If your landlord renovates, they can raise rent but there are limits. You have the right to see documentation of renovation costs.",
+      "risk_level": "caution",
+      "source_document": "rent-increase.pdf",
+      "original_category": null
+    },
+    {
+      "id": "rent_04",
+      "category": "Rent & Costs",
+      "title": "Indexed Rent Clauses",
+      "key_rule": "Rent can be tied to inflation index with specific conditions",
+      "expat_implication": "Be wary of indexed rent contracts. While they protect landlords from inflation, they can lead to significant increases over time.",
+      "risk_level": "caution",
+      "source_document": "indexed-rate.pdf",
+      "original_category": null
+    },
+    {
+      "id": "repairs_01",
+      "category": "Repairs & Maintenance",
+      "title": "Landlord Repair Responsibilities",
+      "key_rule": "Landlord responsible for structural repairs and major systems",
+      "expat_implication": "Heating, plumbing, roof, and building structure are landlord's responsibility. Don't let landlords push these costs onto you.",
+      "risk_level": "caution",
+      "source_document": "repairs.pdf",
+      "original_category": null
+    },
+    {
+      "id": "repairs_02",
+      "category": "Repairs & Maintenance",
+      "title": "Tenant Minor Repair Obligation",
+      "key_rule": "Tenants responsible for minor repairs up to €100-150",
+      "expat_implication": "Small repairs like changing lightbulbs or fixing a dripping tap are your responsibility. Keep receipts for any repairs you pay for.",
+      "risk_level": "normal",
+      "source_document": "repairs.pdf",
+      "original_category": null
+    },
+    {
+      "id": "repairs_03",
+      "category": "Repairs & Maintenance",
+      "title": "Heating System Standards",
+      "key_rule": "Landlord must ensure adequate heating (minimum 20-22°C)",
+      "expat_implication": "If your apartment is too cold, landlord must fix heating within reasonable time. Document temperatures if there are issues.",
+      "risk_level": "caution",
+      "source_document": "heating.pdf",
+      "original_category": null
+    },
+    {
+      "id": "repairs_04",
+      "category": "Repairs & Maintenance",
+      "title": "Cosmetic Repairs Timeline",
+      "key_rule": "Who pays for cosmetic repairs depends on contract and duration",
+      "expat_implication": "Painting and wallpapering rules vary. In long-term rentals, tenants often handle cosmetic repairs, but this must be in contract.",
+      "risk_level": "normal",
+      "source_document": "cosmetic-repairs.pdf",
+      "original_category": null
+    },
+    {
+      "id": "rights_01",
+      "category": "Rights & Obligations",
+      "title": "Quiet Enjoyment Rights",
+      "key_rule": "Tenants have right to peaceful enjoyment of property",
+      "expat_implication": "Landlord cannot enter without notice except emergencies. 24-48 hours notice is standard for non-urgent visits.",
+      "risk_level": "normal",
+      "source_document": "landlord-visits.pdf",
+      "original_category": null
+    },
+    {
+      "id": "rights_02",
+      "category": "Rights & Obligations",
+      "title": "Landlord Access Rules",
+      "key_rule": "Landlord must provide reasonable notice before entering",
+      "expat_implication": "You can refuse entry without proper notice. Emergency access is allowed but must be justified.",
+      "risk_level": "caution",
+      "source_document": "landlord-visits.pdf",
+      "original_category": null
+    },
+    {
+      "id": "rights_03",
+      "category": "Rights & Obligations",
+      "title": "Subletting Permission",
+      "key_rule": "Subletting requires landlord's written consent",
+      "expat_implication": "Get sublet permission in writing before signing. Landlords can't unreasonably refuse if you have legitimate need.",
+      "risk_level": "caution",
+      "source_document": "subletting.pdf",
+      "original_category": null
+    },
+    {
+      "id": "rights_04",
+      "category": "Rights & Obligations",
+      "title": "Housing Protection Benefits",
+      "key_rule": "Social housing offers additional protections",
+      "expat_implication": "If you qualify for social housing, you get extra protection against eviction and rent increases. Check eligibility requirements.",
+      "risk_level": "normal",
+      "source_document": "housing-protection.pdf",
+      "original_category": null
+    },
+    {
+      "id": "termination_02",
+      "category": "Notice Periods",
+      "title": "Landlord Notice Requirements",
+      "key_rule": "Landlords need valid reasons and longer notice periods",
+      "expat_implication": "Landlords can't terminate without good cause. Notice periods vary: 3 months for 5 years, 6 months for 8 years, 9 months for 10+ years.",
+      "risk_level": "normal",
+      "source_document": "termination-landlord.pdf",
+      "original_category": "Termination & Notice"
+    },
+    {
+      "id": "termination_03",
+      "category": "Notice Periods",
+      "title": "Special Termination Rights",
+      "key_rule": "Early termination possible for job loss, illness, or military service",
+      "expat_implication": "If you lose your job or have health issues, you may terminate early with proper documentation. This is crucial for expats facing sudden repatriation.",
+      "risk_level": "caution",
+      "source_document": "termination-tenants.pdf",
+      "original_category": "Termination & Notice"
+    },
+    {
+      "id": "termination_04",
+      "category": "Notice Periods",
+      "title": "Moving Out Process",
+      "key_rule": "Handover protocol must be followed precisely",
+      "expat_implication": "Schedule handover inspection, document everything, and get written confirmation of condition. This affects your deposit return.",
+      "risk_level": "caution",
+      "source_document": "moving-in-out.pdf",
+      "original_category": "Termination & Notice"
+    },
+    {
+      "id": "utilities_01",
+      "category": "Utility Costs",
+      "title": "Utility Bill Settlement",
+      "key_rule": "Annual settlement of utility costs with potential refunds or additional payments",
+      "expat_implication": "Keep all utility bills. You may get money back if you used less than estimated, or pay more if you exceeded estimates.",
+      "risk_level": "normal",
+      "source_document": "utility-costs.pdf",
+      "original_category": null
+    },
+    {
+      "id": "utilities_02",
+      "category": "Utility Costs",
+      "title": "Heating Cost Allocation",
+      "key_rule": "Heating costs must be fairly distributed among tenants",
+      "expat_implication": "Understand how heating costs are calculated. New buildings must have individual metering for better cost control.",
+      "risk_level": "normal",
+      "source_document": "heating.pdf",
+      "original_category": null
+    },
+    {
+      "id": "special_01",
+      "category": "Special Situations",
+      "title": "Inheritance of Tenancy",
+      "key_rule": "Family members can inherit tenancy rights",
+      "expat_implication": "If you pass away, your spouse or children can take over the lease. This provides stability for families in difficult times.",
+      "risk_level": "normal",
+      "source_document": "various",
+      "original_category": null
+    },
+    {
+      "id": "special_02",
+      "category": "Special Situations",
+      "title": "Sale of Property",
+      "key_rule": "New owner must honor existing lease",
+      "expat_implication": "If your landlord sells the building, your lease remains valid with same terms. New owner can't terminate or change terms without cause.",
+      "risk_level": "normal",
+      "source_document": "various",
+      "original_category": null
+    },
+    {
+      "id": "special_03",
+      "category": "Special Situations",
+      "title": "Force Majeure Events",
+      "key_rule": "Extraordinary circumstances may affect obligations",
+      "expat_implication": "Pandemics, natural disasters, or other force majeure events may temporarily suspend certain obligations. Document everything carefully.",
+      "risk_level": "caution",
+      "source_document": "various",
+      "original_category": null
+    }
+  ]
+}
