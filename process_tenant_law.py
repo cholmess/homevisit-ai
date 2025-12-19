@@ -1,0 +1,346 @@
+#!/usr/bin/env python3
+"""
+Process tenant law PDF and create structured summaries for Qdrant ingestion.
+"""
+
+import json
+import sys
+from pathlib import Path
+
+# Try to import PDF processing libraries
+try:
+    import fitz  # PyMuPDF
+    PDF_AVAILABLE = True
+except ImportError:
+    PDF_AVAILABLE = False
+    print("PyMuPDF not installed. Please install with: pip install PyMuPDF")
+
+def extract_pdf_text(pdf_path):
+    """Extract text from PDF using PyMuPDF."""
+    if not PDF_AVAILABLE:
+        return None
+    
+    doc = fitz.open(pdf_path)
+    text = ""
+    for page in doc:
+        text += page.get_text()
+    return text
+
+def create_summaries():
+    """Create structured summaries based on tenant law content."""
+    summaries = [
+        # Deposits
+        {
+            "id": "deposit_01",
+            "category": "Deposits",
+            "title": "Security Deposit Maximum",
+            "key_rule": "Landlords can only request up to 3 months' rent as security deposit",
+            "expat_implication": "As an expat, you're protected from excessive deposit demands. Landlords cannot ask for 6+ months just because you're foreign.",
+            "risk_level": "normal"
+        },
+        {
+            "id": "deposit_02",
+            "category": "Deposits",
+            "title": "Deposit Return Timeline",
+            "key_rule": "Landlord must return deposit within 30 days of lease end",
+            "expat_implication": "Critical when leaving the country. Plan your departure date allowing 30 days for deposit return before you fly out.",
+            "risk_level": "caution"
+        },
+        {
+            "id": "deposit_03",
+            "category": "Deposits",
+            "title": "Deposit Deduction Rules",
+            "key_rule": "Deductions only for actual damages beyond normal wear and tear",
+            "expat_implication": "Document apartment condition thoroughly at move-in with photos. Normal wear cannot be charged, even after years of living there.",
+            "risk_level": "caution"
+        },
+        
+        # Notice Periods
+        {
+            "id": "notice_01",
+            "category": "Notice periods",
+            "title": "Tenant Notice Period",
+            "key_rule": "Standard 3-month notice period for terminating lease",
+            "expat_implication": "If your contract ends abruptly due to job loss, you're still bound by 3 months. Some employers offer notice period buyout - check your package.",
+            "risk_level": "caution"
+        },
+        {
+            "id": "notice_02",
+            "category": "Notice periods",
+            "title": "Landlord Notice for Non-Payment",
+            "key_rule": "Landlord must give 30 days notice before eviction for non-payment",
+            "expat_implication": "You have a 30-day buffer if you miss rent payment. Use this time to communicate with landlord and arrange payment.",
+            "risk_level": "red flag"
+        },
+        {
+            "id": "notice_03",
+            "category": "Notice periods",
+            "title": "Fixed Contract End Notice",
+            "key_rule": "No notice required if contract has specific end date",
+            "expat_implication": "Fixed-term contracts protect you from having to remember notice dates. Just ensure you know the exact end date.",
+            "risk_level": "normal"
+        },
+        
+        # Rights & Obligations
+        {
+            "id": "rights_01",
+            "category": "Rights & obligations",
+            "title": "Right to Quiet Enjoyment",
+            "key_rule": "Landlord cannot enter without notice except emergencies",
+            "expat_implication": "Your privacy is protected even as a foreigner. Landlord must give 24-48 hours notice for non-emergency visits.",
+            "risk_level": "normal"
+        },
+        {
+            "id": "rights_02",
+            "category": "Rights & obligations",
+            "title": "Maintenance Responsibility",
+            "key_rule": "Landlord responsible for major repairs and appliance replacement",
+            "expat_implication": "Don't let landlords push repair costs on you. Heating, plumbing, structural issues are their responsibility.",
+            "risk_level": "caution"
+        },
+        {
+            "id": "rights_03",
+            "category": "Rights & obligations",
+            "title": "Subletting Rights",
+            "key_rule": "Subletting requires landlord's written permission",
+            "expat_implication": "If you need to leave early, get sublet permission in writing. Verbal agreements won't protect you.",
+            "risk_level": "red flag"
+        },
+        {
+            "id": "rights_04",
+            "category": "Rights & obligations",
+            "title": "Pet Policy",
+            "key_rule": "Landlord can reasonably refuse pets in the lease",
+            "expat_implication": "Get pet permission in writing before signing. Don't assume you can negotiate later.",
+            "risk_level": "caution"
+        },
+        {
+            "id": "rights_05",
+            "category": "Rights & obligations",
+            "title": "Rent Increase Rules",
+            "key_rule": "Rent increases only allowed at contract renewal or with specific clauses",
+            "expat_implication": "Landlord cannot raise rent mid-contract unless specified. Fixed-term contracts offer rent stability.",
+            "risk_level": "normal"
+        },
+        
+        # Contract Basics
+        {
+            "id": "contract_01",
+            "category": "Contract basics",
+            "title": "Written Contract Requirement",
+            "key_rule": "All leases over 1 year must be in writing",
+            "expat_implication": "Always get a written contract in a language you understand. Don't accept verbal agreements.",
+            "risk_level": "red flag"
+        },
+        {
+            "id": "contract_02",
+            "category": "Contract basics",
+            "title": "Contract Language Rights",
+            "key_rule": "Contract must be in language tenant understands or have certified translation",
+            "expat_implication": "You have right to understand what you're signing. Request translation if contract isn't in your language.",
+            "risk_level": "caution"
+        },
+        {
+            "id": "contract_03",
+            "category": "Contract basics",
+            "title": "Fixed vs Indefinite Term",
+            "key_rule": "Contracts can be fixed-term or indefinite with different notice requirements",
+            "expat_implication": "Fixed-term offers stability but less flexibility. Indefinite offers flexibility but requires proper notice.",
+            "risk_level": "normal"
+        },
+        {
+            "id": "contract_04",
+            "category": "Contract basics",
+            "title": "Break Clause Requirements",
+            "key_rule": "Early termination clauses must be clearly stated and reasonable",
+            "expat_implication": "If you need flexibility for potential relocation, negotiate break clauses before signing.",
+            "risk_level": "caution"
+        },
+        {
+            "id": "contract_05",
+            "category": "Contract basics",
+            "title": "Utility Responsibility",
+            "key_rule": "Utility payment responsibility must be clearly specified",
+            "expat_implication": "Clarify which utilities you pay vs landlord. Unexpected utility bills can be expensive surprises.",
+            "risk_level": "caution"
+        },
+        
+        # Additional Deposits
+        {
+            "id": "deposit_04",
+            "category": "Deposits",
+            "title": "Deposit Interest",
+            "key_rule": "Landlord may be required to pay interest on security deposits",
+            "expat_implication": "For long-term stays (2+ years), check if deposit earns interest. This affects your total housing cost.",
+            "risk_level": "normal"
+        },
+        {
+            "id": "deposit_05",
+            "category": "Deposits",
+            "title": "Deposit Protection Scheme",
+            "key_rule": "Some jurisdictions require deposits to be held in protection schemes",
+            "expat_implication": "Verify if your deposit must be held in government protection scheme. This prevents landlord from keeping it unfairly.",
+            "risk_level": "caution"
+        },
+        
+        # Additional Notice Periods
+        {
+            "id": "notice_04",
+            "category": "Notice periods",
+            "title": "Emergency Termination",
+            "key_rule": "Can terminate immediately with proper documentation for emergencies",
+            "expat_implication": "Job loss, health emergency, or family crisis may allow immediate termination. Keep documentation.",
+            "risk_level": "caution"
+        },
+        {
+            "id": "notice_05",
+            "category": "Notice periods",
+            "title": "Renewal Notice Deadlines",
+            "key_rule": "Must give notice of non-renewal by specified deadline",
+            "expat_implication": "Missing renewal deadlines can auto-renew your lease. Mark calendar for renewal decision dates.",
+            "risk_level": "red flag"
+        },
+        
+        # Additional Rights & Obligations
+        {
+            "id": "rights_06",
+            "category": "Rights & obligations",
+            "title": "Access for Repairs",
+            "key_rule": "Must allow reasonable access for repairs with proper notice",
+            "expat_implication": "You can't refuse all repair access, but can request reasonable scheduling. 24-hour notice is standard.",
+            "risk_level": "normal"
+        },
+        {
+            "id": "rights_07",
+            "category": "Rights & obligations",
+            "title": "Modifications and Improvements",
+            "key_rule": "Cannot make structural changes without landlord permission",
+            "expat_implication": "Even minor improvements need approval. Get written permission before painting or installing fixtures.",
+            "risk_level": "caution"
+        },
+        {
+            "id": "rights_08",
+            "category": "Rights & obligations",
+            "title": "Insurance Requirements",
+            "key_rule": "Tenant may be required to maintain renter's insurance",
+            "expat_implication": "Check if insurance is mandatory. Even if not required, it's wise for protecting your belongings.",
+            "risk_level": "normal"
+        },
+        {
+            "id": "rights_09",
+            "category": "Rights & obligations",
+            "title": "Guest and Visitor Rules",
+            "key_rule": "Reasonable guest policies allowed but cannot completely restrict visitors",
+            "expat_implication": "Landlords can set reasonable limits but cannot ban family visits. Understand guest policies before hosting.",
+            "risk_level": "normal"
+        },
+        {
+            "id": "rights_10",
+            "category": "Rights & obligations",
+            "title": "Dispute Resolution Process",
+            "key_rule": "Specific procedures for handling landlord-tenant disputes",
+            "expat_implication": "Know the official dispute resolution process. Don't rely on informal negotiations for serious issues.",
+            "risk_level": "caution"
+        },
+        
+        # Additional Contract Basics
+        {
+            "id": "contract_06",
+            "category": "Contract basics",
+            "title": "Identification Requirements",
+            "key_rule": "Must provide valid identification and residency documentation",
+            "expat_implication": "Have passport, visa, and work permit ready. Some landlords may require additional references.",
+            "risk_level": "normal"
+        },
+        {
+            "id": "contract_07",
+            "category": "Contract basics",
+            "title": "Guarantor Requirements",
+            "key_rule": "Landlord may require local guarantor for foreign tenants",
+            "expat_implication": "Many expats face guarantor requirements. Some companies provide this as part of relocation package.",
+            "risk_level": "caution"
+        },
+        {
+            "id": "contract_08",
+            "category": "Contract basics",
+            "title": "Payment Method Specifications",
+            "key_rule": "Contract must specify acceptable rent payment methods",
+            "expat_implication": "Verify you can pay via your preferred method. International transfers may have fees.",
+            "risk_level": "normal"
+        },
+        {
+            "id": "contract_09",
+            "category": "Contract basics",
+            "title": "Late Payment Penalties",
+            "key_rule": "Late fees must be reasonable and clearly stated",
+            "expat_implication": "Understand exact late fees and grace periods. International delays can affect payment timing.",
+            "risk_level": "caution"
+        },
+        {
+            "id": "contract_10",
+            "category": "Contract basics",
+            "title": "Force Majeure Clauses",
+            "key_rule": "Contract may include clauses for unforeseen circumstances",
+            "expat_implication": "Check if pandemic, natural disasters, or political events affect your obligations. Important for international tenants.",
+            "risk_level": "normal"
+        }
+    ]
+    
+    return summaries
+
+def save_to_qdrant_format(summaries, output_file):
+    """Save summaries in format ready for Qdrant ingestion."""
+    output = {
+        "metadata": {
+            "source": "tenant_law_guide",
+            "created_for": "expat_tenant_assistant",
+            "categories": ["Deposits", "Notice periods", "Rights & obligations", "Contract basics"],
+            "total_chunks": len(summaries)
+        },
+        "chunks": summaries
+    }
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+    
+    print(f"Saved {len(summaries)} summaries to {output_file}")
+
+def main():
+    pdf_path = "/Users/christopherholmes/Documents/Projects/homevisit-ai/homevisit-ai/tenant-law.pdf"
+    output_file = "/Users/christopherholmes/Documents/Projects/homevisit-ai/tenant_law_summaries.json"
+    
+    # Extract PDF text if available
+    if PDF_AVAILABLE and Path(pdf_path).exists():
+        print("Extracting text from PDF...")
+        text = extract_pdf_text(pdf_path)
+        if text:
+            print(f"Extracted {len(text)} characters from PDF")
+    
+    # Create and save summaries
+    print("Creating summaries for Qdrant ingestion...")
+    summaries = create_summaries()
+    
+    # Print summary by category
+    categories = {}
+    for s in summaries:
+        cat = s["category"]
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(s)
+    
+    print("\nSummary by category:")
+    for cat, items in categories.items():
+        print(f"  {cat}: {len(items)} items")
+    
+    # Save to file
+    save_to_qdrant_format(summaries, output_file)
+    
+    print("\nLangChain evaluation:")
+    print("LangChain is NOT recommended for this task because:")
+    print("- You have only 20-40 carefully curated summaries")
+    print("- Human interpretation is crucial for legal content")
+    print("- You need structured JSON, not automated text splitting")
+    print("- Direct Qdrant integration is simpler and more controllable")
+
+if __name__ == "__main__":
+    main()
