@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeVisit AI - Your Rental Assistant</title>
+    <script src="https://unpkg.com/@vapi-ai/web@latest/dist/umd/index.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #EEF2FF;
+            --text: #1F2937;
+            --text-light: #6B7280;
+            --bg: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --border: #E5E7EB;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: var(--text-light);
+            font-size: 16px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            margin: 8px 0;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn.secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .btn.recording {
+            background: #DC2626;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .language-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .language-option {
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .language-option:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .language-option.active {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .language-option img {
+            width: 40px;
+            height: 30px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .conversation {
+            flex: 1;
+            overflow-y: auto;
+            margin: 16px 0;
+            padding: 16px;
+            background: #F9FAFB;
+            border-radius: 8px;
+            min-height: 300px;
+            max-height: 400px;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            max-width: 80%;
+            padding: 10px 16px;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .message.landlord {
+            background: #E5E7EB;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.you {
+            background: var(--primary);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .transcript {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            min-height: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .transcript.listening {
+            background: #e3f2fd;
+            border-left: 4px solid #4F46E5;
+        }
+
+        #record-btn.recording {
+            background: #ef4444;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .suggestions {
+            margin-top: 16px;
+        }
+
+        .suggestions h3 {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+
+        .suggestion {
+            background: var(--primary-light);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 4px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .suggestion:hover {
+            background: #E0E7FF;
+        }
+
+        .status {
+            text-align: center;
+            padding: 8px;
+            margin: 8px 0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .status.recording {
+            background: #FEE2E2;
+            color: #B91C1C;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Add to your style section */
+        .legal-info {
+            margin-top: 20px;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+
+        .law-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #4F46E5;
+        }
+
+        .law-card.red-flag {
+            border-left-color: #DC2626;
+            background-color: #FEF2F2;
+        }
+
+        .law-card.caution {
+            border-left-color: #F59E0B;
+            background-color: #FFFBEB;
+        }
+
+        .law-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .risk-badge {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .risk-badge.red-flag {
+            background-color: #FEE2E2;
+            color: #B91C1C;
+        }
+
+        .risk-badge.caution {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+
+        .risk-badge.normal {
+            background-color: #E0F2FE;
+            color: #0369A1;
+        }
+
+        .law-card h4 {
+            margin: 0;
+            color: var(--text);
+            font-size: 15px;
+        }
+
+        .law-card p {
+            margin: 5px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .law-card .implication {
+            color: var(--text-light);
+            font-style: italic;
+            font-size: 13px;
+            border-top: 1px dashed #eee;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .search-container {
+            display: flex;
+            margin: 20px 0;
+        }
+
+        #legal-search {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .search-container button {
+            padding: 10px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+
+        .search-container button:hover {
+            background: #4338CA;
+        }
+
+        .search-results {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .category-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .category-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-card h4 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+        }
+
+        .stats {
+            display: flex;
+            gap: 10px;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+
+        .topic-count {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            padding: 5px 0;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .back-button:hover {
+            text-decoration: underline;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-light);
+        }
+
+        .no-results p {
+            margin: 10px 0;
+        }
+
+        .category-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .law-card .btn {
+            margin-top: 10px;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Language Selection Screen -->
+        <header>
+            <h1>HomeVisit AI</h1>
+            <p class="subtitle">Your personal rental assistant</p>
+        </header>
+
+        <div class="card" id="language-screen">
+            <h2>Select Languages</h2>
+            <p>Choose your language and the landlord's language</p>
+
+            <div style="margin: 24px 0;">
+                <h3>I speak:</h3>
+                <div class="language-selector" id="user-languages">
+                    <div class="language-option" data-lang="en" onclick="selectLanguage('en', 'user')">
+                        <img src="https://flagcdn.com/w40/gb.png" alt="English">
+                        <div>English</div>
+                    </div>
+                    <div class="language-option" data-lang="es" onclick="selectLanguage('es', 'user')">
+                        <img src="https://flagcdn.com/w40/es.png" alt="Spanish">
+                        <div>Español</div>
+                    </div>
+                    <div class="language-option" data-lang="fr" onclick="selectLanguage('fr', 'user')">
+                        <img src="https://flagcdn.com/w40/fr.png" alt="French">
+                        <div>Français</div>
+                    </div>
+                    <div class="language-option" data-lang="de" onclick="selectLanguage('de', 'user')">
+                        <img src="https://flagcdn.com/w40/de.png" alt="German">
+                        <div>Deutsch</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin: 24px 0;">
+                <h3>Landlord speaks:</h3>
+                <div class="language-selector" id="landlord-languages">
+                    <div class="language-option" data-lang="en" onclick="selectLanguage('en', 'landlord')">
+                        <img src="https://flagcdn.com/w40/gb.png" alt="English">
+                        <div>English</div>
+                    </div>
+                    <div class="language-option" data-lang="es" onclick="selectLanguage('es', 'landlord')">
+                        <img src="https://flagcdn.com/w40/es.png" alt="Spanish">
+                        <div>Español</div>
+                    </div>
+                    <div class="language-option" data-lang="fr" onclick="selectLanguage('fr', 'landlord')">
+                        <img src="https://flagcdn.com/w40/fr.png" alt="French">
+                        <div>Français</div>
+                    </div>
+                    <div class="language-option" data-lang="de" onclick="selectLanguage('de', 'landlord')">
+                        <img src="https://flagcdn.com/w40/de.png" alt="German">
+                        <div>Deutsch</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" id="start-btn" disabled onclick="startConversation()">
+                Start Conversation
+            </button>
+        </div>
+
+        <!-- Conversation Screen -->
+        <div class="card hidden" id="conversation-screen">
+            <div class="conversation" id="chat-container">
+                <div class="message landlord">
+                    Hello! I'm your HomeVisit AI assistant. I'll help you communicate with the landlord.
+                </div>
+            </div>
+
+            <div class="status" id="status">
+                Tap the button to start speaking to the landlord
+            </div>
+
+            <div id="transcript" class="transcript"></div>
+
+            <button class="btn" id="record-btn" onclick="toggleRecording()">
+                🎤 Speak to Landlord
+            </button>
+
+            <button class="btn secondary" id="legal-help-btn" onclick="showLegalHelp()">
+                ℹ️ Rental Law Help
+            </button>
+
+            <div class="suggestions">
+                <h3>Suggested Questions:</h3>
+                <div id="suggestions">
+                    <div class="suggestion" onclick="useSuggestion(this)">How much is the rent?</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Are utilities included?</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">When is the apartment available?</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // App State
+        const state = {
+            userLanguage: null,
+            landlordLanguage: null,
+            isRecording: false,
+            vapi: null,
+            conversation: []
+        };
+
+        const tenantLawGuide = {
+
+            "metadata": {
+                "source": "tenant_law_guide",
+                "created_for": "expat_tenant_assistant",
+                "categories": [
+                    "Deposits",
+                    "Notice periods",
+                    "Rights & obligations",
+                    "Contract basics"
+                ],
+                "total_chunks": 30
+            },
+            "chunks": [
+                {
+                    "id": "deposit_01",
+                    "category": "Deposits",
+                    "title": "Security Deposit Maximum",
+                    "key_rule": "Landlords can only request up to 3 months' rent as security deposit",
+                    "expat_implication": "As an expat, you're protected from excessive deposit demands. Landlords cannot ask for 6+ months just because you're foreign.",
+                    "risk_level": "normal"
+                },
+                {
+                    "id": "deposit_02",
+                    "category": "Deposits",
+                    "title": "Deposit Return Timeline",
+                    "key_rule": "Landlord must return deposit within 30 days of lease end",
+                    "expat_implication": "Critical when leaving the country. Plan your departure date allowing 30 days for deposit return before you fly out.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "deposit_03",
+                    "category": "Deposits",
+                    "title": "Deposit Deduction Rules",
+                    "key_rule": "Deductions only for actual damages beyond normal wear and tear",
+                    "expat_implication": "Document apartment condition thoroughly at move-in with photos. Normal wear cannot be charged, even after years of living there.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "notice_01",
+                    "category": "Notice periods",
+                    "title": "Tenant Notice Period",
+                    "key_rule": "Standard 3-month notice period for terminating lease",
+                    "expat_implication": "If your contract ends abruptly due to job loss, you're still bound by 3 months. Some employers offer notice period buyout - check your package.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "notice_02",
+                    "category": "Notice periods",
+                    "title": "Landlord Notice for Non-Payment",
+                    "key_rule": "Landlord must give 30 days notice before eviction for non-payment",
+                    "expat_implication": "You have a 30-day buffer if you miss rent payment. Use this time to communicate with landlord and arrange payment.",
+                    "risk_level": "red flag"
+                },
+                {
+                    "id": "notice_03",
+                    "category": "Notice periods",
+                    "title": "Fixed Contract End Notice",
+                    "key_rule": "No notice required if contract has specific end date",
+                    "expat_implication": "Fixed-term contracts protect you from having to remember notice dates. Just ensure you know the exact end date.",
+                    "risk_level": "normal"
+                },
+                {
+                    "id": "rights_01",
+                    "category": "Rights & obligations",
+                    "title": "Right to Quiet Enjoyment",
+                    "key_rule": "Landlord cannot enter without notice except emergencies",
+                    "expat_implication": "Your privacy is protected even as a foreigner. Landlord must give 24-48 hours notice for non-emergency visits.",
+                    "risk_level": "normal"
+                },
+                {
+                    "id": "rights_02",
+                    "category": "Rights & obligations",
+                    "title": "Maintenance Responsibility",
+                    "key_rule": "Landlord responsible for major repairs and appliance replacement",
+                    "expat_implication": "Don't let landlords push repair costs on you. Heating, plumbing, structural issues are their responsibility.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "rights_03",
+                    "category": "Rights & obligations",
+                    "title": "Subletting Rights",
+                    "key_rule": "Subletting requires landlord's written permission",
+                    "expat_implication": "If you need to leave early, get sublet permission in writing. Verbal agreements won't protect you.",
+                    "risk_level": "red flag"
+                },
+                {
+                    "id": "rights_04",
+                    "category": "Rights & obligations",
+                    "title": "Pet Policy",
+                    "key_rule": "Landlord can reasonably refuse pets in the lease",
+                    "expat_implication": "Get pet permission in writing before signing. Don't assume you can negotiate later.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "rights_05",
+                    "category": "Rights & obligations",
+                    "title": "Rent Increase Rules",
+                    "key_rule": "Rent increases only allowed at contract renewal or with specific clauses",
+                    "expat_implication": "Landlord cannot raise rent mid-contract unless specified. Fixed-term contracts offer rent stability.",
+                    "risk_level": "normal"
+                },
+                {
+                    "id": "contract_01",
+                    "category": "Contract basics",
+                    "title": "Written Contract Requirement",
+                    "key_rule": "All leases over 1 year must be in writing",
+                    "expat_implication": "Always get a written contract in a language you understand. Don't accept verbal agreements.",
+                    "risk_level": "red flag"
+                },
+                {
+                    "id": "contract_02",
+                    "category": "Contract basics",
+                    "title": "Contract Language Rights",
+                    "key_rule": "Contract must be in language tenant understands or have certified translation",
+                    "expat_implication": "You have right to understand what you're signing. Request translation if contract isn't in your language.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "contract_03",
+                    "category": "Contract basics",
+                    "title": "Fixed vs Indefinite Term",
+                    "key_rule": "Contracts can be fixed-term or indefinite with different notice requirements",
+                    "expat_implication": "Fixed-term offers stability but less flexibility. Indefinite offers flexibility but requires proper notice.",
+                    "risk_level": "normal"
+                },
+                {
+                    "id": "contract_04",
+                    "category": "Contract basics",
+                    "title": "Break Clause Requirements",
+                    "key_rule": "Early termination clauses must be clearly stated and reasonable",
+                    "expat_implication": "If you need flexibility for potential relocation, negotiate break clauses before signing.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "contract_05",
+                    "category": "Contract basics",
+                    "title": "Utility Responsibility",
+                    "key_rule": "Utility payment responsibility must be clearly specified",
+                    "expat_implication": "Clarify which utilities you pay vs landlord. Unexpected utility bills can be expensive surprises.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "deposit_04",
+                    "category": "Deposits",
+                    "title": "Deposit Interest",
+                    "key_rule": "Landlord may be required to pay interest on security deposits",
+                    "expat_implication": "For long-term stays (2+ years), check if deposit earns interest. This affects your total housing cost.",
+                    "risk_level": "normal"
+                },
+                {
+                    "id": "deposit_05",
+                    "category": "Deposits",
+                    "title": "Deposit Protection Scheme",
+                    "key_rule": "Some jurisdictions require deposits to be held in protection schemes",
+                    "expat_implication": "Verify if your deposit must be held in government protection scheme. This prevents landlord from keeping it unfairly.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "notice_04",
+                    "category": "Notice periods",
+                    "title": "Emergency Termination",
+                    "key_rule": "Can terminate immediately with proper documentation for emergencies",
+                    "expat_implication": "Job loss, health emergency, or family crisis may allow immediate termination. Keep documentation.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "notice_05",
+                    "category": "Notice periods",
+                    "title": "Renewal Notice Deadlines",
+                    "key_rule": "Must give notice of non-renewal by specified deadline",
+                    "expat_implication": "Missing renewal deadlines can auto-renew your lease. Mark calendar for renewal decision dates.",
+                    "risk_level": "red flag"
+                },
+                {
+                    "id": "rights_06",
+                    "category": "Rights & obligations",
+                    "title": "Access for Repairs",
+                    "key_rule": "Must allow reasonable access for repairs with proper notice",
+                    "expat_implication": "You can't refuse all repair access, but can request reasonable scheduling. 24-hour notice is standard.",
+                    "risk_level": "normal"
+                },
+                {
+                    "id": "rights_07",
+                    "category": "Rights & obligations",
+                    "title": "Modifications and Improvements",
+                    "key_rule": "Cannot make structural changes without landlord permission",
+                    "expat_implication": "Even minor improvements need approval. Get written permission before painting or installing fixtures.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "rights_08",
+                    "category": "Rights & obligations",
+                    "title": "Insurance Requirements",
+                    "key_rule": "Tenant may be required to maintain renter's insurance",
+                    "expat_implication": "Check if insurance is mandatory. Even if not required, it's wise for protecting your belongings.",
+                    "risk_level": "normal"
+                },
+                {
+                    "id": "rights_09",
+                    "category": "Rights & obligations",
+                    "title": "Guest and Visitor Rules",
+                    "key_rule": "Reasonable guest policies allowed but cannot completely restrict visitors",
+                    "expat_implication": "Landlords can set reasonable limits but cannot ban family visits. Understand guest policies before hosting.",
+                    "risk_level": "normal"
+                },
+                {
+                    "id": "rights_10",
+                    "category": "Rights & obligations",
+                    "title": "Dispute Resolution Process",
+                    "key_rule": "Specific procedures for handling landlord-tenant disputes",
+                    "expat_implication": "Know the official dispute resolution process. Don't rely on informal negotiations for serious issues.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "contract_06",
+                    "category": "Contract basics",
+                    "title": "Identification Requirements",
+                    "key_rule": "Must provide valid identification and residency documentation",
+                    "expat_implication": "Have passport, visa, and work permit ready. Some landlords may require additional references.",
+                    "risk_level": "normal"
+                },
+                {
+                    "id": "contract_07",
+                    "category": "Contract basics",
+                    "title": "Guarantor Requirements",
+                    "key_rule": "Landlord may require local guarantor for foreign tenants",
+                    "expat_implication": "Many expats face guarantor requirements. Some companies provide this as part of relocation package.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "contract_08",
+                    "category": "Contract basics",
+                    "title": "Payment Method Specifications",
+                    "key_rule": "Contract must specify acceptable rent payment methods",
+                    "expat_implication": "Verify you can pay via your preferred method. International transfers may have fees.",
+                    "risk_level": "normal"
+                },
+                {
+                    "id": "contract_09",
+                    "category": "Contract basics",
+                    "title": "Late Payment Penalties",
+                    "key_rule": "Late fees must be reasonable and clearly stated",
+                    "expat_implication": "Understand exact late fees and grace periods. International delays can affect payment timing.",
+                    "risk_level": "caution"
+                },
+                {
+                    "id": "contract_10",
+                    "category": "Contract basics",
+                    "title": "Force Majeure Clauses",
+                    "key_rule": "Contract may include clauses for unforeseen circumstances",
+                    "expat_implication": "Check if pandemic, natural disasters, or political events affect your obligations. Important for international tenants.",
+                    "risk_level": "normal"
+                }
+            ]
+
+        };
+        let vapi;
+        let isVapiInitialized = false;
+        let isVapiSpeaking = false;
+        // Vapi Configuration
+        const VAPI_PUBLIC_KEY = '98d65e65-51c6-4552-b382-334521407798'; // Replace with your Vapi public key
+
+        // Language Configuration
+        const languages = {
+            en: { name: 'English', voice: 'jennifer', flag: '🇬🇧' },
+            es: { name: 'Spanish', voice: 'es-ES-Standard-A', flag: '🇪🇸' },
+            fr: { name: 'French', voice: 'fr-FR-Standard-A', flag: '🇫🇷' },
+            de: { name: 'German', voice: 'de-DE-Standard-A', flag: '🇩🇪' },
+            zh: { name: 'Chinese', voice: 'cmn-CN-Standard-A', flag: '🇨🇳' },
+            ja: { name: 'Japanese', voice: 'ja-JP-Standard-A', flag: '🇯🇵' }
+        };
+
+        // DOM Elements
+        const languageScreen = document.getElementById('language-screen');
+        const conversationScreen = document.getElementById('conversation-screen');
+        const chatContainer = document.getElementById('chat-container');
+        const recordBtn = document.getElementById('record-btn');
+        const statusEl = document.getElementById('status');
+        const startBtn = document.getElementById('start-btn');
+
+        // Initialize Vapi
+        async function initializeVapi() {
+            if (isVapiInitialized) return;
+
+            try {
+                vapi = new Vapi('YOUR_VAPI_PUBLIC_KEY', {
+                    stt: {
+                        provider: 'deepgram',
+                        language: state.userLanguage || 'en-US',
+                        model: 'nova-2',
+                        interimResults: true,
+                        endpointing: 1000,
+                        sampleRate: 16000,
+                        encoding: 'linear16',
+                        channels: 1,
+                        vad: {
+                            enabled: true,
+                            voiceStart: 500,
+                            voiceEnd: 1000
+                        }
+                    },
+                    tts: {
+                        provider: 'playht',
+                        model: 'playht-multilingual-v1',
+                        voiceId: getVoiceForLanguage(state.landlordLanguage)
+                    }
+                });
+                setupVapiHandlers();
+                isVapiInitialized = true;
+                console.log('Vapi initialized with translation');
+            } catch (error) {
+                console.error('Error initializing Vapi:', error);
+            }
+        }
+        function getVoiceForLanguage(lang) {
+            const voices = {
+                'en': 's3://voice-cloning-zero-shot/2bc098a7-e20d-4bf4-aacf-ef504319c4d7/female-cs_en_2_1.wav',
+                'es': 's3://voice-cloning-zero-shot/2bc098a7-e20d-4bf4-aacf-ef504319c4d7/male_es_es_1.wav',
+                'fr': 's3://voice-cloning-zero-shot/2bc098a7-e20d-4bf4-aacf-ef504319c4d7/female_fr_1.wav',
+                'de': 's3://voice-cloning-zero-shot/2bc098a7-e20d-4bf4-aacf-ef504319c4d7/male_de_1.wav',
+                'it': 's3://voice-cloning-zero-shot/2bc098a7-e20d-4bf4-aacf-ef504319c4d7/male_it_1.wav',
+                'pt': 's3://voice-cloning-zero-shot/2bc098a7-e20d-4bf4-aacf-ef504319c4d7/female_pt_1.wav',
+                'ja': 's3://voice-cloning-zero-shot/2bc098a7-e20d-4bf4-aacf-ef504319c4d7/female_ja_1.wav',
+                'zh': 's3://voice-cloning-zero-shot/2bc098a7-e20d-4bf4-aacf-ef504319c4d7/female_zh_cn_1.wav',
+                'ko': 's3://voice-cloning-zero-shot/2bc098a7-e20d-4bf4-aacf-ef504319c4d7/female_ko_1.wav',
+                'ru': 's3://voice-cloning-zero-shot/2bc098a7-e20d-4bf4-aacf-ef504319c4d7/female_ru_1.wav'
+            };
+            return voices[lang] || voices['en']; // Default to English
+        }
+
+        function setupVapiHandlers() {
+            let finalTranscript = '';
+            let isFinal = false;
+            vapi.on('speech-start', () => {
+                console.log('Speech started');
+                finalTranscript = '';
+                isFinal = false;
+                document.getElementById('transcript').classList.add('listening');
+            });
+            vapi.on('transcript', async (transcript) => {
+                if (transcript.isFinal) {
+                    finalTranscript = transcript.text;
+                    isFinal = true;
+
+                    // Add user's original message
+                    addMessage('user', finalTranscript);
+                    document.getElementById('transcript').textContent = '';
+
+                    // Translate the message to landlord's language
+                    try {
+                        const translatedText = await translateText(finalTranscript, state.userLanguage, state.landlordLanguage);
+
+                        // Speak the translated text
+                        if (vapi && !isVapiSpeaking) {
+                            isVapiSpeaking = true;
+                            await vapi.speak(translatedText, {
+                                provider: 'playht',
+                                voiceId: getVoiceForLanguage(state.landlordLanguage)
+                            });
+                            isVapiSpeaking = false;
+                        }
+
+                        // Add translated message to chat
+                        addMessage('assistant', `(Translated to ${languages[state.landlordLanguage].name}): ${translatedText}`);
+
+                    } catch (error) {
+                        console.error('Translation/speech error:', error);
+                        addMessage('assistant', 'Sorry, there was an error with translation.');
+                    }
+                } else {
+                    // Show interim results
+                    document.getElementById('transcript').textContent = finalTranscript + ' ' + transcript.text;
+                }
+            });
+            vapi.on('speech-end', () => {
+                console.log('Speech ended');
+                document.getElementById('transcript').classList.remove('listening');
+                isVapiSpeaking = false;
+            });
+            vapi.on('error', (error) => {
+                console.error('Vapi error:', error);
+                document.getElementById('transcript').textContent = 'Error: ' + (error.message || 'Unknown error');
+                document.getElementById('transcript').classList.remove('listening');
+                isVapiSpeaking = false;
+            });
+        }
+
+        // Language Selection
+        function selectLanguage(lang, type) {
+            // Update UI
+            const selector = type === 'user' ? '#user-languages' : '#landlord-languages';
+            document.querySelectorAll(`${selector} .language-option`).forEach(opt => {
+                opt.classList.remove('active');
+                if (opt.dataset.lang === lang) {
+                    opt.classList.add('active');
+                }
+            });
+
+            // Update state
+            if (type === 'user') {
+                state.userLanguage = lang;
+            } else {
+                state.landlordLanguage = lang;
+            }
+
+            // Enable start button if both languages are selected
+            if (state.userLanguage && state.landlordLanguage) {
+                startBtn.disabled = false;
+            }
+        }
+
+        // Start Conversation
+        function startConversation() {
+            languageScreen.classList.add('hidden');
+            conversationScreen.classList.remove('hidden');
+            initVapi();
+
+            // Add welcome message
+            addMessage('assistant', `You're all set! I'll help you communicate in ${languages[state.landlordLanguage].name}. Tap the button to start speaking.`);
+        }
+
+        // Toggle Recording
+        async function toggleRecording() {
+            if (state.isRecording) {
+                stopRecording();
+            } else {
+                await startRecording();
+            }
+        }
+
+        // Start Recording
+        async function startRecording() {
+            if (!isVapiInitialized) {
+                await initializeVapi();
+            }
+
+            try {
+                await vapi.start();
+                isRecording = true;
+                updateUIForRecording(true);
+                updateStatus('Listening...', 'recording');
+            } catch (error) {
+                console.error('Error starting recording:', error);
+                updateStatus('Error: Could not access microphone', 'error');
+            }
+        }
+
+        function updateUIForRecording(isRecording) {
+            const recordBtn = document.getElementById('record-btn');
+            if (isRecording) {
+                recordBtn.classList.add('recording');
+                recordBtn.innerHTML = '🛑 Stop';
+            } else {
+                recordBtn.classList.remove('recording');
+                recordBtn.innerHTML = '🎤 Speak to Landlord';
+            }
+        }
+        // Update the stopRecording function
+        async function stopRecording() {
+            if (!isVapiInitialized || !isRecording) return;
+
+            try {
+                await vapi.stop();
+                isRecording = false;
+                updateUIForRecording(false);
+                updateStatus('Tap the button to speak to the landlord');
+            } catch (error) {
+                console.error('Error stopping recording:', error);
+                updateStatus('Error stopping recording', 'error');
+            }
+        }
+        // Add message to chat
+        function addMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender === 'user' ? 'you' : 'landlord'}`;
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Add legal info for user messages
+            if (sender === 'landlord') {
+                const legalInfo = showLegalInfo(text);
+                if (legalInfo) {
+                    const legalDiv = document.createElement('div');
+                    legalDiv.className = 'legal-info-container';
+                    legalDiv.innerHTML = legalInfo;
+                    messageDiv.appendChild(legalDiv);
+                }
+            }
+
+            // Add to conversation history
+            state.conversation.push({
+                role: sender,
+                content: text,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Update status message
+        function updateStatus(message, type = '') {
+            statusEl.textContent = message;
+            statusEl.className = 'status' + (type ? ` ${type}` : '');
+        }
+
+        // Use a suggested question
+        function useSuggestion(element) {
+            const text = element.textContent;
+            const inputEvent = new Event('input', { bubbles: true });
+            document.getElementById('user-input').value = text;
+            document.getElementById('user-input').dispatchEvent(inputEvent);
+        }
+
+        // Generate suggestions based on context
+        function generateSuggestions(context) {
+            // In a real app, this would call your Qdrant/LLM service
+            // For the demo, we'll use some hardcoded suggestions
+            const suggestions = [
+                "Can you tell me about the neighborhood?",
+                "Are there any additional fees?",
+                "Is the apartment furnished?",
+                "What's the policy on pets?",
+                "How do I apply for the apartment?"
+            ];
+
+            const suggestionsContainer = document.getElementById('suggestions');
+            suggestionsContainer.innerHTML = '';
+
+            suggestions.forEach(suggestion => {
+                const div = document.createElement('div');
+                div.className = 'suggestion';
+                div.textContent = suggestion;
+                div.onclick = () => {
+                    // Simulate user sending this message
+                    addMessage('user', suggestion);
+                    // In a real app, you would also send this to the landlord
+                    updateStatus('Suggestion sent to landlord');
+                };
+                suggestionsContainer.appendChild(div);
+            });
+        }
+
+        function findRelevantLaws(query) {
+            const queryLower = query.toLowerCase();
+            const relevantChunks = [];
+
+            // Simple keyword matching - in a real app, you'd use more sophisticated NLP
+            const keywords = [
+                { terms: ['deposit', 'security', 'bond'], category: 'Deposits' },
+                { terms: ['notice', 'terminate', 'end lease', 'move out'], category: 'Notice periods' },
+                { terms: ['right', 'obligation', 'responsibility', 'landlord', 'tenant'], category: 'Rights & obligations' },
+                { terms: ['contract', 'agreement', 'lease', 'terms'], category: 'Contract basics' }
+            ];
+            // Find matching categories
+            const matchedCategories = new Set();
+            for (const { terms, category } of keywords) {
+                if (terms.some(term => queryLower.includes(term))) {
+                    matchedCategories.add(category);
+                }
+            }
+            // Get relevant chunks
+            for (const chunk of tenantLawGuide.chunks) {
+                if (matchedCategories.has(chunk.category)) {
+                    relevantChunks.push(chunk);
+                }
+            }
+            // Sort by risk level (red flag > caution > normal)
+            relevantChunks.sort((a, b) => {
+                const riskOrder = { 'red flag': 0, 'caution': 1, 'normal': 2 };
+                return riskOrder[a.risk_level] - riskOrder[b.risk_level];
+            });
+            return relevantChunks.slice(0, 3); // Return top 3 most relevant
+        }
+
+        function showLegalInfo(query) {
+            const relevantLaws = findRelevantLaws(query);
+            if (relevantLaws.length === 0) return '';
+            let html = '<div class="legal-info">';
+            html += '<h3>📚 Relevant Rental Laws</h3>';
+
+            relevantLaws.forEach(law => {
+                const riskIcon = law.risk_level === 'red flag' ? '⚠️' :
+                    (law.risk_level === 'caution' ? 'ℹ️' : '✅');
+
+                html += `
+        <div class="law-card ${law.risk_level.replace(' ', '-')}">
+            <div class="law-header">
+                <span class="risk-badge ${law.risk_level.replace(' ', '-')}">${riskIcon} ${law.risk_level}</span>
+                <h4>${law.title}</h4>
+            </div>
+            <p><strong>${law.key_rule}</strong></p>
+            <p class="implication">${law.expat_implication}</p>
+        </div>`;
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        function showLegalHelp() {
+            document.getElementById('legal-help-modal').style.display = 'block';
+            searchLegalTopics(''); // Show all topics initially
+        }
+        function closeLegalHelp() {
+            document.getElementById('legal-help-modal').style.display = 'none';
+        }
+
+        function searchLegalTopics(query = '') {
+            const searchInput = document.getElementById('legal-search');
+            const searchTerm = query || searchInput.value.toLowerCase();
+            const resultsContainer = document.getElementById('legal-results');
+
+            if (!searchTerm.trim()) {
+                // Show all categories if search is empty
+                showAllCategories();
+                return;
+            }
+            // Find relevant laws
+            const relevantLaws = findRelevantLaws(searchTerm);
+
+            if (relevantLaws.length === 0) {
+                resultsContainer.innerHTML = `
+            <div class="no-results">
+                <p>No matching laws found for "${searchTerm}"</p>
+                <p>Try searching for: deposit, notice period, contract terms, etc.</p>
+            </div>`;
+                return;
+            }
+            // Display search results
+            let html = '<div class="search-results">';
+            html += `<h3>Search results for "${searchTerm}"</h3>`;
+
+            relevantLaws.forEach(law => {
+                const riskIcon = law.risk_level === 'red flag' ? '⚠️' :
+                    (law.risk_level === 'caution' ? 'ℹ️' : '✅');
+
+                html += `
+        <div class="law-card ${law.risk_level.replace(' ', '-')}">
+            <div class="law-header">
+                <span class="category-badge">${law.category}</span>
+                <span class="risk-badge ${law.risk_level.replace(' ', '-')}">
+                    ${riskIcon} ${law.risk_level}
+                </span>
+            </div>
+            <h4>${law.title}</h4>
+            <p><strong>${law.key_rule}</strong></p>
+            <p class="implication">${law.expat_implication}</p>
+            <button class="btn secondary" 
+                    onclick="useLegalInfo('${law.key_rule}')">
+                Use this information
+            </button>
+        </div>`;
+            });
+
+            html += '</div>';
+            resultsContainer.innerHTML = html;
+        }
+        // Helper function to show all categories
+        function showAllCategories() {
+            const resultsContainer = document.getElementById('legal-results');
+            const categories = [...new Set(tenantLawGuide.chunks.map(c => c.category))];
+
+            let html = '<div class="category-list">';
+            html += '<h3>Browse by Category</h3>';
+
+            categories.forEach(category => {
+                const chunks = tenantLawGuide.chunks.filter(c => c.category === category);
+                const redFlags = chunks.filter(c => c.risk_level === 'red flag').length;
+                const cautions = chunks.filter(c => c.risk_level === 'caution').length;
+                const normals = chunks.length - redFlags - cautions;
+
+                html += `
+        <div class="category-card" onclick="showCategory('${category}')">
+            <h4>${category}</h4>
+            <div class="stats">
+                ${redFlags ? `<span class="red-flag">${redFlags} ⚠️</span>` : ''}
+                ${cautions ? `<span class="caution">${cautions} ℹ️</span>` : ''}
+                ${normals ? `<span class="normal">${normals} ✅</span>` : ''}
+            </div>
+            <div class="topic-count">${chunks.length} topics</div>
+        </div>`;
+            });
+
+            html += '</div>';
+            resultsContainer.innerHTML = html;
+        }
+        // Show all laws in a specific category
+        function showCategory(category) {
+            const resultsContainer = document.getElementById('legal-results');
+            const laws = tenantLawGuide.chunks.filter(law => law.category === category);
+
+            let html = `<div class="category-view">
+        <button class="back-button" onclick="showAllCategories()">← Back to categories</button>
+        <h3>${category}</h3>`;
+
+            laws.forEach(law => {
+                const riskIcon = law.risk_level === 'red flag' ? '⚠️' :
+                    (law.risk_level === 'caution' ? 'ℹ️' : '✅');
+
+                html += `
+        <div class="law-card ${law.risk_level.replace(' ', '-')}">
+            <div class="law-header">
+                <span class="risk-badge ${law.risk_level.replace(' ', '-')}">
+                    ${riskIcon} ${law.risk_level}
+                </span>
+                <h4>${law.title}</h4>
+            </div>
+            <p><strong>${law.key_rule}</strong></p>
+            <p class="implication">${law.expat_implication}</p>
+            <button class="btn secondary" 
+                    onclick="useLegalInfo('${law.key_rule.replace(/'/g, "\\'")}')">
+                Use this information
+            </button>
+        </div>`;
+            });
+
+            html += '</div>';
+            resultsContainer.innerHTML = html;
+        }
+        // Add this function to handle using legal info in conversation
+        function useLegalInfo(info) {
+            // Add the legal info to the conversation
+            addMessage('assistant', `Here's some legal information that might help:\n\n${info}`);
+
+            // Close the modal
+            closeLegalHelp();
+
+            // Scroll to the bottom of the conversation
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        // Add this to your existing init function or DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // ... existing code ...
+
+            // Add event listener for Enter key in search
+            const searchInput = document.getElementById('legal-search');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        searchLegalTopics();
+                    }
+                });
+            }
+        });
+
+        // Mock translation function
+        async function translateText(text, fromLang, toLang) {
+            // In a real app, you would call a translation API here
+            // This is a simplified mock implementation
+            const mockTranslations = {
+                "hello": { "es": "Hola", "fr": "Bonjour", "de": "Hallo" },
+                "how much is the rent": { "es": "¿Cuánto es el alquiler?", "fr": "Combien coûte le loyer ?", "de": "Wie hoch ist die Miete?" },
+                "are utilities included": { "es": "¿Los servicios están incluidos?", "fr": "Les charges sont-elles comprises ?", "de": "Sind die Nebenkosten inbegriffen?" },
+                "when is the apartment available": { "es": "¿Cuándo está disponible el apartamento?", "fr": "Quand l'appartement sera-t-il disponible ?", "de": "Wann ist die Wohnung verfügbar?" }
+            };
+
+            const lowerText = text.toLowerCase();
+            return mockTranslations[lowerText]?.[toLang] || `[Translated to ${languages[toLang].name}: "${text}"]`;
+        }
+
+        async function initializeVapi() {
+            try {
+                vapi = new Vapi('YOUR_VAPI_PUBLIC_KEY', {
+                    stt: {
+                        provider: 'deepgram', // More accurate speech recognition
+                        language: 'en-US',    // Set to your language
+                        model: 'nova-2',      // Latest model for better accuracy
+                        interimResults: true,  // Get partial results
+                        endpointing: 1000,    // Wait longer before ending
+                        sampleRate: 16000,    // Standard sample rate
+                        encoding: 'linear16', // Standard encoding
+                        channels: 1,          // Mono channel
+                        vad: {                // Voice activity detection
+                            enabled: true,
+                            voiceStart: 500,  // Start of speech detection (ms)
+                            voiceEnd: 1000    // End of speech detection (ms)
+                        }
+                    }
+                });
+
+                isVapiInitialized = true;
+                console.log('Vapi initialized with enhanced settings');
+                setupVapiHandlers();
+            } catch (error) {
+                console.error('Error initializing Vapi:', error);
+            }
+        }
+
+        function setupVapiHandlers() {
+            let finalTranscript = '';
+            let isFinal = false;
+            vapi.on('speech-start', () => {
+                console.log('Speech started');
+                finalTranscript = '';
+                isFinal = false;
+                document.getElementById('transcript').classList.add('listening');
+            });
+            vapi.on('transcript', (transcript) => {
+                if (transcript.isFinal) {
+                    finalTranscript = transcript.text;
+                    isFinal = true;
+                    addMessage('user', finalTranscript);
+                    document.getElementById('transcript').textContent = '';
+                } else {
+                    // Show interim results
+                    document.getElementById('transcript').textContent = finalTranscript + ' ' + transcript.text;
+                }
+            });
+            vapi.on('speech-end', () => {
+                console.log('Speech ended');
+                document.getElementById('transcript').classList.remove('listening');
+
+                // If we have a final transcript, process it
+                if (finalTranscript && isFinal) {
+                    // Process the final transcript
+                    processUserInput(finalTranscript);
+                    finalTranscript = '';
+                    isFinal = false;
+                }
+            });
+            vapi.on('error', (error) => {
+                console.error('Vapi error:', error);
+                document.getElementById('transcript').textContent = 'Error: ' + error.message;
+                document.getElementById('transcript').classList.remove('listening');
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default languages
+            selectLanguage('en', 'user');
+            selectLanguage('es', 'landlord');
+        });
+    </script>
+
+    <div id="legal-help-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLegalHelp()">&times;</span>
+            <h2>Rental Law Help Center</h2>
+            <div class="search-container">
+                <input type="text" id="legal-search"
+                    placeholder="Search rental laws (e.g., deposits, notice periods)...">
+                <button onclick="searchLegalTopics()">Search</button>
+            </div>
+            <div id="legal-results"></div>
+        </div>
+    </div>
+</body>
+
+</html>
