@@ -54,13 +54,95 @@ export default function Page() {
   const chatRef = useRef<HTMLDivElement | null>(null);
   const vapiRef = useRef<any>(null);
   const messagesRef = useRef<ChatMessage[]>(messages);
+  const recognitionRef = useRef<any>(null);
+  const [useNativeSpeech, setUseNativeSpeech] = useState(true); // Use browser speech by default
 
   const [textInput, setTextInput] = useState('');
   const [showLegalModal, setShowLegalModal] = useState(false);
   const [legalSearch, setLegalSearch] = useState('');
   const [legalResults, setLegalResults] = useState<Citation[]>([]);
   const [legalLoading, setLegalLoading] = useState(false);
+  const [legalError, setLegalError] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([
+    'What should I check during the viewing?',
+    'What are my rights regarding the deposit?',
+    'Can the landlord increase the rent?'
+  ]);
+  const [translatedText, setTranslatedText] = useState('');
+  const [isTranslating, setIsTranslating] = useState(false);
+  const translateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [vapiReady, setVapiReady] = useState(true); // npm package is always ready
+
+  // Initialize native speech recognition
+  const initNativeSpeech = useCallback(() => {
+    if (recognitionRef.current) return true;
+    
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setStatus('Speech recognition not supported in this browser');
+      return false;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = userLanguage === 'es' ? 'es-ES' : userLanguage === 'fr' ? 'fr-FR' : userLanguage === 'de' ? 'de-DE' : 'en-US';
+
+    recognition.onstart = () => {
+      console.log('[Speech] Started');
+      setStatus('Listening... speak now!');
+    };
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+
+      if (interimTranscript) {
+        setTranscript(interimTranscript);
+      }
+
+      if (finalTranscript) {
+        console.log('[Speech] Final:', finalTranscript);
+        setTranscript('');
+        void onUserText(finalTranscript);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('[Speech] Error:', event.error);
+      if (event.error === 'not-allowed') {
+        setStatus('Microphone access denied');
+      } else {
+        setStatus(`Speech error: ${event.error}`);
+      }
+      setRecording(false);
+    };
+
+    recognition.onend = () => {
+      console.log('[Speech] Ended');
+      if (recording) {
+        // Restart if still in recording mode
+        try {
+          recognition.start();
+        } catch (e) {
+          setRecording(false);
+          setStatus('Tap Speak to start again');
+        }
+      }
+    };
+
+    recognitionRef.current = recognition;
+    return true;
+  }, [userLanguage, recording]);
 
   // Keep ref in sync with state for use in closures
   useEffect(() => {
@@ -75,6 +157,59 @@ export default function Page() {
   }, [messages, citations]);
 
   const apiBase = useMemo(() => process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000', []);
+
+  // Translate text with debouncing
+  const translateText = useCallback(async (text: string) => {
+    if (!text.trim() || userLanguage === landlordLanguage) {
+      setTranslatedText('');
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const res = await fetch(`${apiBase}/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          source_language: userLanguage,
+          target_language: landlordLanguage
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTranslatedText(data.translated_text || '');
+      }
+    } catch {
+      // Silently fail translation
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [apiBase, userLanguage, landlordLanguage]);
+
+  // Debounced translation effect
+  useEffect(() => {
+    if (!transcript.trim()) {
+      setTranslatedText('');
+      return;
+    }
+
+    // Clear previous timeout
+    if (translateTimeoutRef.current) {
+      clearTimeout(translateTimeoutRef.current);
+    }
+
+    // Debounce translation by 500ms
+    translateTimeoutRef.current = setTimeout(() => {
+      void translateText(transcript);
+    }, 500);
+
+    return () => {
+      if (translateTimeoutRef.current) {
+        clearTimeout(translateTimeoutRef.current);
+      }
+    };
+  }, [transcript, translateText]);
 
   const initVapi = useCallback(() => {
     if (vapiRef.current) return true;
@@ -175,9 +310,15 @@ export default function Page() {
           throw new Error(body?.detail || `API error (${res.status})`);
         }
 
-        const data = (await res.json()) as { answer: string; citations: Citation[] };
+        const data = (await res.json()) as { answer: string; citations: Citation[]; suggestions?: string[] };
         setMessages((prev: ChatMessage[]) => [...prev, { role: 'assistant', content: data.answer }]);
         setCitations(data.citations || []);
+        
+        // Update suggestions if provided
+        if (data.suggestions && data.suggestions.length > 0) {
+          setSuggestions(data.suggestions);
+        }
+        
         setStatus('Tap the button to speak again');
 
         if (vapiRef.current && data.answer) {
@@ -187,7 +328,7 @@ export default function Page() {
           }
         }
       } catch (e: any) {
-        setStatus(e?.message || 'Failed to contact API');
+        setStatus(e?.message || 'Failed to contact API. Make sure the backend is running.');
       }
     },
     [apiBase, landlordLanguage, userLanguage]
@@ -207,8 +348,47 @@ export default function Page() {
   }, [initVapi]);
 
   const toggleRecording = useCallback(async () => {
+    // Use native browser speech recognition (more reliable)
+    if (useNativeSpeech) {
+      if (recording) {
+        // Stop recording
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+        }
+        setRecording(false);
+        setStatus('Tap the button to start speaking');
+        return;
+      }
+
+      // Request microphone permission
+      setStatus('Requesting microphone access...');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+        console.log('[Mic] Permission granted');
+      } catch (micError: any) {
+        console.error('[Mic] Permission denied:', micError);
+        setStatus('Microphone access denied. Please allow microphone in browser settings.');
+        return;
+      }
+
+      // Initialize and start native speech recognition
+      if (!initNativeSpeech()) {
+        return;
+      }
+
+      try {
+        recognitionRef.current.start();
+        setRecording(true);
+      } catch (e: any) {
+        console.error('[Speech] Start error:', e);
+        setStatus('Failed to start speech recognition');
+      }
+      return;
+    }
+
+    // Fallback to Vapi
     if (!initVapi()) {
-      // SDK not ready yet, will retry when vapiReady changes
       return;
     }
     const vapi = vapiRef.current;
@@ -222,11 +402,9 @@ export default function Page() {
         return;
       }
 
-      // Request microphone permission explicitly first
       setStatus('Requesting microphone access...');
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Stop the test stream immediately - Vapi will create its own
         stream.getTracks().forEach(track => track.stop());
         console.log('[Mic] Permission granted');
       } catch (micError: any) {
@@ -238,7 +416,6 @@ export default function Page() {
       setStatus('Connecting to Vapi...');
       console.log('[Vapi] Starting call...');
 
-      // Start Vapi with a minimal assistant for transcription
       await vapi.start({
         transcriber: {
           provider: 'deepgram',
@@ -266,7 +443,7 @@ export default function Page() {
       setStatus(e?.message || 'Microphone error');
       setRecording(false);
     }
-  }, [initVapi, recording, userLanguage]);
+  }, [initVapi, initNativeSpeech, recording, userLanguage, useNativeSpeech]);
 
   return (
     <>
@@ -386,8 +563,22 @@ export default function Page() {
                 {status}
               </div>
 
-              <div className={'mt-3 rounded-lg px-3 py-2 text-sm ' + (recording ? 'bg-blue-50 text-blue-800' : 'bg-[#F5F5F5] text-[var(--text-light)]')}>
-                {transcript || (recording ? 'Listening…' : '')}
+              {/* Transcript with real-time translation */}
+              <div className="mt-3 grid gap-2">
+                <div className={'rounded-lg px-3 py-2 text-sm ' + (recording ? 'bg-blue-50 text-blue-800' : 'bg-[#F5F5F5] text-[var(--text-light)]')}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold opacity-60">You:</span>
+                    <span>{transcript || (recording ? 'Listening…' : 'Your speech will appear here')}</span>
+                  </div>
+                </div>
+                {userLanguage !== landlordLanguage && (transcript || translatedText) && (
+                  <div className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold opacity-60">Translation:</span>
+                      <span>{isTranslating ? 'Translating...' : translatedText || '...'}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <button
@@ -408,6 +599,25 @@ export default function Page() {
               >
                 ℹ️ Rental Law Help
               </button>
+
+              {/* Suggested Questions */}
+              {suggestions.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-xs font-semibold text-[var(--text-light)] mb-2">Suggested questions:</h3>
+                  <div className="grid gap-2">
+                    {suggestions.map((s, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => void onUserText(s)}
+                        className="text-left rounded-lg bg-[var(--primary-light)] px-3 py-2 text-sm text-[var(--primary)] hover:bg-[#E0E7FF] transition"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Text input fallback */}
               <form
@@ -460,6 +670,7 @@ export default function Page() {
                 e.preventDefault();
                 if (!legalSearch.trim()) return;
                 setLegalLoading(true);
+                setLegalError('');
                 try {
                   const res = await fetch(`${apiBase}/search`, {
                     method: 'POST',
@@ -469,9 +680,14 @@ export default function Page() {
                   if (res.ok) {
                     const data = (await res.json()) as { results: Citation[] };
                     setLegalResults(data.results || []);
+                    if (data.results.length === 0) {
+                      setLegalError('No results found. Try different keywords.');
+                    }
+                  } else {
+                    setLegalError('Search failed. Make sure the backend API is running.');
                   }
                 } catch {
-                  // ignore
+                  setLegalError('Could not connect to API. Start the backend with: cd apps/api && uvicorn main:app --reload');
                 } finally {
                   setLegalLoading(false);
                 }
@@ -493,6 +709,12 @@ export default function Page() {
               </button>
             </form>
 
+            {legalError && (
+              <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                {legalError}
+              </div>
+            )}
+
             {legalResults.length > 0 && (
               <div className="mt-4 grid gap-3">
                 {legalResults.map((c: Citation) => (
@@ -507,12 +729,29 @@ export default function Page() {
                       <span className="font-semibold">Rule:</span> {c.key_rule}
                     </div>
                     <div className="mt-2 text-xs text-[var(--text-light)]">{c.expat_implication}</div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Add this info to the conversation
+                        setMessages((prev: ChatMessage[]) => [
+                          ...prev,
+                          {
+                            role: 'assistant',
+                            content: `📚 **${c.title}**\n\n**Rule:** ${c.key_rule}\n\n**For expats:** ${c.expat_implication}`
+                          }
+                        ]);
+                        setShowLegalModal(false);
+                      }}
+                      className="mt-3 w-full rounded-lg bg-[var(--primary-light)] px-3 py-2 text-sm font-medium text-[var(--primary)] hover:bg-[#E0E7FF] transition"
+                    >
+                      Use this info
+                    </button>
                   </div>
                 ))}
               </div>
             )}
 
-            {legalResults.length === 0 && !legalLoading && (
+            {legalResults.length === 0 && !legalLoading && !legalError && (
               <p className="mt-4 text-center text-sm text-[var(--text-light)]">
                 Search for topics like &quot;deposit&quot;, &quot;notice period&quot;, &quot;contract&quot;, etc.
               </p>

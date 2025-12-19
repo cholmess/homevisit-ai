@@ -58,6 +58,28 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     citations: list[SearchResult]
+    suggestions: list[str] = Field(default_factory=list)
+
+
+class SuggestionsRequest(BaseModel):
+    messages: list[ChatMessage] = Field(default_factory=list)
+    context: str = ""
+
+
+class SuggestionsResponse(BaseModel):
+    suggestions: list[str]
+
+
+class TranslateRequest(BaseModel):
+    text: str = Field(min_length=1)
+    source_language: str = "en"
+    target_language: str = "en"
+
+
+class TranslateResponse(BaseModel):
+    translated_text: str
+    source_language: str
+    target_language: str
 
 
 app = FastAPI(title="HomeVisit AI API")
@@ -163,9 +185,158 @@ def chat(req: ChatRequest) -> ChatResponse:
         )
 
         answer = completion.choices[0].message.content or ""
-        return ChatResponse(answer=answer, citations=citations)
+
+        # Generate follow-up suggestions
+        suggestions: list[str] = []
+        try:
+            suggestion_completion = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "Based on the conversation about rental/tenant topics, suggest 3 brief follow-up questions "
+                            "the user might want to ask. Focus on practical concerns for someone viewing a rental property. "
+                            "Return ONLY the 3 questions, one per line, no numbering or bullets."
+                        )
+                    },
+                    {"role": "user", "content": f"Conversation context: {user_text}\n\nAssistant's answer: {answer[:500]}"},
+                ],
+                temperature=0.7,
+                max_tokens=150,
+            )
+            suggestion_text = suggestion_completion.choices[0].message.content or ""
+            suggestions = [s.strip() for s in suggestion_text.strip().split("\n") if s.strip()][:3]
+        except Exception:
+            suggestions = [
+                "What should I check during the viewing?",
+                "What are my rights regarding the deposit?",
+                "Can the landlord increase the rent?"
+            ]
+
+        return ChatResponse(answer=answer, citations=citations, suggestions=suggestions)
 
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/suggestions", response_model=SuggestionsResponse)
+def get_suggestions(req: SuggestionsRequest) -> SuggestionsResponse:
+    """Generate follow-up question suggestions based on conversation context."""
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+    model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+    # Default suggestions if no OpenAI
+    default_suggestions = [
+        "What should I check during the apartment viewing?",
+        "What are the rules about security deposits?",
+        "How much notice do I need to give to move out?",
+        "What repairs is the landlord responsible for?",
+        "Can the landlord enter my apartment without permission?"
+    ]
+
+    if not openai_api_key or OpenAI is None:
+        return SuggestionsResponse(suggestions=default_suggestions[:3])
+
+    try:
+        client = OpenAI(api_key=openai_api_key)
+
+        # Build context from messages
+        context = req.context or ""
+        if req.messages:
+            context += "\n".join([f"{m.role}: {m.content}" for m in req.messages[-6:]])
+
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are helping someone prepare for a rental property viewing. "
+                        "Based on the conversation, suggest 3 relevant follow-up questions they should ask. "
+                        "Focus on practical tenant concerns. Return ONLY the 3 questions, one per line."
+                    )
+                },
+                {"role": "user", "content": f"Context: {context}" if context else "Generate 3 general rental viewing questions."},
+            ],
+            temperature=0.7,
+            max_tokens=150,
+        )
+
+        suggestion_text = completion.choices[0].message.content or ""
+        suggestions = [s.strip() for s in suggestion_text.strip().split("\n") if s.strip()][:3]
+
+        if not suggestions:
+            suggestions = default_suggestions[:3]
+
+        return SuggestionsResponse(suggestions=suggestions)
+
+    except Exception:
+        return SuggestionsResponse(suggestions=default_suggestions[:3])
+
+
+# Language code mapping for translation
+LANG_NAMES = {
+    "en": "English",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German",
+}
+
+
+@app.post("/translate", response_model=TranslateResponse)
+def translate(req: TranslateRequest) -> TranslateResponse:
+    """Translate text between languages using OpenAI."""
+    # If same language, return as-is
+    if req.source_language == req.target_language:
+        return TranslateResponse(
+            translated_text=req.text,
+            source_language=req.source_language,
+            target_language=req.target_language
+        )
+
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+    model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+    if not openai_api_key or OpenAI is None:
+        # Return original text if no API key
+        return TranslateResponse(
+            translated_text=req.text,
+            source_language=req.source_language,
+            target_language=req.target_language
+        )
+
+    try:
+        client = OpenAI(api_key=openai_api_key)
+
+        source_name = LANG_NAMES.get(req.source_language, req.source_language)
+        target_name = LANG_NAMES.get(req.target_language, req.target_language)
+
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"You are a translator. Translate the following text from {source_name} to {target_name}. Return ONLY the translated text, nothing else."
+                },
+                {"role": "user", "content": req.text}
+            ],
+            temperature=0.3,
+            max_tokens=500,
+        )
+
+        translated = completion.choices[0].message.content or req.text
+        return TranslateResponse(
+            translated_text=translated.strip(),
+            source_language=req.source_language,
+            target_language=req.target_language
+        )
+
+    except Exception:
+        return TranslateResponse(
+            translated_text=req.text,
+            source_language=req.source_language,
+            target_language=req.target_language
+        )
