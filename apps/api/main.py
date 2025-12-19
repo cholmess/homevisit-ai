@@ -5,9 +5,14 @@ import sys
 from pathlib import Path
 from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+import httpx
+import asyncio
+from dotenv import load_dotenv
+
+load_dotenv()
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -19,6 +24,68 @@ try:
     from openai import OpenAI
 except Exception:
     OpenAI = None  # type: ignore
+
+
+# VAPI Translation Models
+class VapiMessage(BaseModel):
+    message: str
+    call: dict = {}
+    transcript: str = ""
+    speaker: str = ""
+    is_final: bool = False
+
+
+class VapiRequest(BaseModel):
+    message: str
+    call: dict = {}
+    transcript: str = ""
+    speaker: str = ""
+    is_final: bool = False
+    function: str = ""
+    parameters: dict = {}
+
+
+# Translation Service
+class TranslationService:
+    def __init__(self):
+        self.deepl_key = os.getenv("DEEPL_API_KEY")
+        self.client = httpx.AsyncClient(timeout=5.0)
+    
+    async def translate(self, text: str, source_lang: str, target_lang: str) -> str:
+        """Translate text using DeepL."""
+        if not self.deepl_key:
+            # Fallback translations for demo
+            translations = {
+                ("Die Kaution beträgt 6 Monatsmieten.", "de", "en"): "The security deposit is 6 months' rent.",
+                ("The rent is 800 euros", "en", "de"): "Die Miete ist 800 Euro."
+            }
+            key = (text, source_lang, target_lang)
+            return translations.get(key, f"[{target_lang.upper()}] {text}")
+        
+        try:
+            response = await self.client.post(
+                "https://api-free.deepl.com/v2/translate",
+                headers={"Authorization": f"DeepL-Auth-Key {self.deepl_key}"},
+                data={
+                    "text": text,
+                    "source_lang": source_lang.upper(),
+                    "target_lang": target_lang.upper()
+                }
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                return result["translations"][0]["text"]
+            
+        except Exception as e:
+            print(f"Translation error: {e}")
+        
+        return text
+
+
+# Initialize services
+translator = TranslationService()
+sessions = {}  # Store language preferences per call
 
 
 class ChatMessage(BaseModel):
@@ -275,6 +342,177 @@ def get_suggestions(req: SuggestionsRequest) -> SuggestionsResponse:
 
     except Exception:
         return SuggestionsResponse(suggestions=default_suggestions[:3])
+
+
+# VAPI Webhook Endpoints
+@app.post("/vapi/webhook")
+async def vapi_webhook(request: Request):
+    """VAPI webhook for bidirectional translation."""
+    data = await request.json()
+    
+    # Extract session info
+    call_id = data.get("call", {}).get("id", "default")
+    message = data.get("message", "")
+    
+    # Initialize session
+    if call_id not in sessions:
+        sessions[call_id] = {
+            "landlord_language": "de",  # Default
+            "tenant_language": "en",   # Default
+            "current_speaker": None
+        }
+    
+    session = sessions[call_id]
+    
+    # Handle different events
+    if message == "call.start":
+        return {
+            "instructions": {
+                "actions": [{
+                    "type": "speak",
+                    "text": "Hello! I'm your housing translator. I'll translate between English and German, and check for any legal issues. Which language does the landlord speak?"
+                }]
+            }
+        }
+    
+    elif message == "speech.update":
+        # Handle speech transcription
+        transcript = data.get("transcript", "")
+        speaker = data.get("speaker", "user")
+        is_final = data.get("is_final", False)
+        
+        if not transcript or not is_final:
+            return {"status": "processing"}
+        
+        # Store speaker
+        session["current_speaker"] = speaker
+        
+        # Determine languages
+        if speaker == "landlord":
+            source_lang = session["landlord_language"]
+            target_lang = session["tenant_language"]
+        else:
+            source_lang = session["tenant_language"]
+            target_lang = session["landlord_language"]
+        
+        # Detect language if needed
+        if any(char in transcript for char in "äöüß"):
+            source_lang = "de"
+        elif any(word in transcript.lower() for word in ["the", "and", "is", "you"]):
+            source_lang = "en"
+        
+        # Translate to other language
+        translated = await translator.translate(transcript, source_lang, target_lang)
+        
+        # Check compliance (always check in English)
+        compliance_result = await check_compliance(
+            translated if source_lang == "en" else transcript
+        )
+        
+        # Prepare response
+        actions = []
+        
+        # Speak the translation
+        if translated != transcript:
+            actions.append({
+                "type": "speak",
+                "text": translated
+            })
+        
+        # Add compliance warning if needed
+        if compliance_result.get("risk_level") != "normal":
+            actions.append({
+                "type": "speak",
+                "text": compliance_result["warning"]
+            })
+        
+        return {
+            "instructions": {"actions": actions},
+            "translation": {
+                "original": transcript,
+                "translated": translated,
+                "from": source_lang,
+                "to": target_lang
+            },
+            "compliance": compliance_result
+        }
+    
+    elif message == "function.update":
+        # Handle function calls
+        function = data.get("function", "")
+        params = data.get("parameters", {})
+        
+        if function == "set_language":
+            lang = params.get("language", "en")
+            speaker = params.get("speaker", "landlord")
+            
+            if speaker == "landlord":
+                session["landlord_language"] = lang
+            else:
+                session["tenant_language"] = lang
+            
+            return {
+                "instructions": {
+                    "actions": [{
+                        "type": "speak",
+                        "text": f"Language set to {lang} for {speaker}"
+                    }]
+                }
+            }
+        
+        elif function == "translate_text":
+            text = params.get("text", "")
+            from_lang = params.get("from", "auto")
+            to_lang = params.get("to", "en")
+            
+            translated = await translator.translate(text, from_lang, to_lang)
+            
+            return {
+                "translation": translated,
+                "instructions": {
+                    "actions": [{
+                        "type": "speak",
+                        "text": translated
+                    }]
+                }
+            }
+    
+    return {"status": "ok"}
+
+
+async def check_compliance(text: str) -> dict:
+    """Check text for compliance issues."""
+    risks = {
+        "6 months": "⚠️ WARNING: Maximum 3 months deposit allowed!",
+        "sofort": "⚠️ WARNING: 3-month notice period required!",
+        "cash only": "⚡ CAUTION: Bank transfer recommended!"
+    }
+    
+    text_lower = text.lower()
+    for pattern, warning in risks.items():
+        if pattern in text_lower:
+            return {
+                "warning": warning,
+                "risk_level": "red flag" if "WARNING" in warning else "caution"
+            }
+    return {"risk_level": "normal"}
+
+
+@app.post("/vapi/set-language")
+async def set_language(call_id: str, speaker: str, language: str):
+    """API to set language preference."""
+    if call_id not in sessions:
+        sessions[call_id] = {
+            "landlord_language": "de",
+            "tenant_language": "en"
+        }
+    
+    if speaker == "landlord":
+        sessions[call_id]["landlord_language"] = language
+    else:
+        sessions[call_id]["tenant_language"] = language
+    
+    return {"status": "language set"}
 
 
 # Language code mapping for translation
