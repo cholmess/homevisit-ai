@@ -1,0 +1,18 @@
+# Core VAPI integration requirements
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+httpx>=0.25.0
+python-dotenv>=1.0.0
+
+# Translation services
+deepl>=1.16.0
+google-cloud-translate>=3.12.0
+
+# Existing requirements
+qdrant-client>=1.7.0
+sentence-transformers>=2.2.2
+numpy>=1.24.0
+
+# Optional: For better performance
+redis>=5.0.0  # For caching translations
+aiofiles>=23.0.0  # For async file operations
