@@ -1,0 +1,12 @@
+language: en-US
+reviews:
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "apps/web/**"
+      instructions: "Review for React/Next.js best practices, TypeScript types, and security"
+    - path: "apps/api/**"
+      instructions: "Review for FastAPI best practices, security, and error handling"
+chat:
+  auto_reply: true
