@@ -1,0 +1,11 @@
+# Qdrant tenant law knowledge base requirements
+qdrant-client>=1.7.0
+sentence-transformers>=2.2.2
+python-dotenv>=1.0.0
+numpy>=1.24.0
+
+# Optional: For OpenAI embeddings instead of sentence-transformers
+# openai>=1.0.0
+
+# Optional: For PDF processing if needed
+# PyMuPDF>=1.23.0
