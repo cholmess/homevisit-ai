@@ -1,0 +1,9 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "cd src/vapi_integration && python vapi_assistant_optimized.py",
+    "healthcheckPath": "/health"
+  }
+}
