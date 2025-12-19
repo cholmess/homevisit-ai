@@ -1,0 +1,55 @@
+{
+  "name": "Expat Housing Assistant",
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4",
+    "temperature": 0.1
+  },
+  "voice": {
+    "provider": "11labs",
+    "voiceId": "rachel"
+  },
+  "recording": {
+    "enabled": true
+  },
+  "server": {
+    "url": "https://your-domain.com/vapi/webhook",
+    "secret": "your-webhook-secret"
+  },
+  "functions": [
+    {
+      "name": "ask_questions",
+      "description": "Ask pre-defined questions about the property",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": ["general", "building", "utilities", "neighborhood", "legal"],
+            "description": "Category of questions to ask"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "check_compliance",
+      "description": "Check if a statement complies with tenant laws",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "statement": {
+            "type": "string",
+            "description": "The statement to check for compliance"
+          }
+        },
+        "required": ["statement"]
+      }
+    }
+  ],
+  "assistant": {
+    "firstMessage": "Hello! I'm your housing assistant. I can translate conversations and check if rental terms comply with local laws. What would you like to know?",
+    "language": "en",
+    "maxDurationSeconds": 3600
+  }
+}
